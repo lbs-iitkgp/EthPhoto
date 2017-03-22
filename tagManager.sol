@@ -2,7 +2,7 @@ pragma solidity ^0.4.10;
 
 //NOT YET TESTED OR COMPILED
 
-contract Tag {
+contract tagManager {
 	
 	struct Photo {
 		string hash;
