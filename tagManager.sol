@@ -203,4 +203,13 @@ contract tagManager {
 			_fileSystemOccupied=false;
 		}
 	}
+
+	function checkIfPhotoExists(string hash) returns (bool){
+		if(_getUserCount[hash]>=1){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
 }
