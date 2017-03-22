@@ -4,6 +4,7 @@ contract ManageAccount {
 
 	struct Photo {
 		string hash;
+		string thumbNailHash;
 		uint timestamp;
 	}
 
