@@ -7,7 +7,7 @@ contract Tag {
 	struct Photo {
 		string hash;
 		string thumbNailHash;
-		unit timestamp;
+		uint timestamp;
 		bool isDeleted;
 	}
 
@@ -15,11 +15,11 @@ contract Tag {
 
 	mapping (uint => Photo) _photos;
 	
-	mapping (string => countUsers) _getUserCount;
+	mapping (string => uint) _getUserCount;
 
 	mapping (string => uint) _photosIndex;
 	
-	Photo[] _pedingPhotos;
+	Photo[] _pendingPhotos;
 
 	Photo[] _createNewBlockForPhotos;
 	
@@ -29,7 +29,7 @@ contract Tag {
 
 	uint _blockSize;
 
-	unit _totalBlocks;
+	uint _totalBlocks;
 
 	string _tagName;
 
@@ -40,21 +40,87 @@ contract Tag {
 		_numPendingPhotos=0;
 		_tagName=tagName;
 	}
+	
+	function strConcat(string _a, string _b, string _c, string _d, string _e) internal returns (string){
+        bytes memory _ba = bytes(_a);
+        bytes memory _bb = bytes(_b);
+        bytes memory _bc = bytes(_c);
+        bytes memory _bd = bytes(_d);
+        bytes memory _be = bytes(_e);
+        string memory abcde = new string(_ba.length + _bb.length + _bc.length + _bd.length + _be.length);
+        bytes memory babcde = bytes(abcde);
+        uint k = 0;
+        for (uint i = 0; i < _ba.length; i++) babcde[k++] = _ba[i];
+        for (i = 0; i < _bb.length; i++) babcde[k++] = _bb[i];
+        for (i = 0; i < _bc.length; i++) babcde[k++] = _bc[i];
+        for (i = 0; i < _bd.length; i++) babcde[k++] = _bd[i];
+        for (i = 0; i < _be.length; i++) babcde[k++] = _be[i];
+        return string(babcde);
+    }
+    
+    string _firstPart;
+    string _secondPart;
+    
+    function constrcutHashThumbNailString(string hash,string thumbNailHash) returns (string){
+        _firstPart=strConcat("{hash:",hash,",","thumbNailHash:",thumbNailHash);
+        _secondPart=strConcat(_firstPart,"}","","","");
+        return _secondPart;
+    }
+    
+    string _convertJson;
+    string _currentElement;
+    string _finalString;
 
-	function convertToJson(uint arrLength) constant returns (string finalString){
-		string finalString="";
+	function convertToJson(uint arrLength) constant returns (string){
+	    _finalString="";
 		for(uint index=0;index<arrLength;index++){
-			string currentElement="{ " + "hash: " + _createNewBlockForPhotos[index] +", " + "thumbNailHash: " + _createNewBlockForPhotos[index].thumbNailHash + "} ";
+		    _currentElement=constrcutHashThumbNailString(_createNewBlockForPhotos[index].hash,_createNewBlockForPhotos[index].thumbNailHash);
 			if(index!=0){
-				finalString=finalString+ ", " + currentElement;
+			    _finalString=strConcat(_finalString,",",_currentElement,"","");
 			}
 			else{
-				finalString=currentElement;
+				_finalString=_currentElement;
 			}
 		}
-		finalString="{[" + finalString + "]}";
-		return finalString;
+		_finalString=strConcat("{[",_finalString,"]}","","");
+		return _finalString;
 	}
+	
+	string _data;
+	string _newFileName;
+	string _firstBlockName;
+	string _endBlockName;
+	
+	function uintToBytes(uint v) constant returns (bytes32 ret) {
+        if (v == 0) {
+            ret = '0';
+        }
+        else {
+            while (v > 0) {
+                ret = bytes32(uint(ret) / (2 ** 8));
+                ret |= bytes32(((v % 10) + 48) * 2 ** (8 * 31));
+                v /= 10;
+            }
+        }
+        return ret;
+    }
+    
+    function bytes32ToString(bytes32 x) constant returns (string) {
+        bytes memory bytesString = new bytes(32);
+        uint charCount = 0;
+        for (uint j = 0; j < 32; j++) {
+            byte char = byte(bytes32(uint(x) * 2 ** (8 * j)));
+            if (char != 0) {
+                bytesString[charCount] = char;
+                charCount++;
+            }
+        }
+        bytes memory bytesStringTrimmed = new bytes(charCount);
+        for (j = 0; j < charCount; j++) {
+            bytesStringTrimmed[j] = bytesString[j];
+        }
+        return string(bytesStringTrimmed);
+    }
 
 	function putInNewBlock(){
 		if(_numPendingPhotos>_blockSize){
@@ -62,14 +128,17 @@ contract Tag {
 				_fileSystemOccupied=true;
 				uint countImages=0;
 				while(countImages<_blockSize){
-					_createNewBlockForPhotos[countImages]=_pedingPhotos[_numPendingPhotos-1-countImages];
+					_createNewBlockForPhotos[countImages]=_pendingPhotos[_numPendingPhotos-1-countImages];
 					countImages=countImages+1;
 				}
 				_totalBlocks=_totalBlocks+1;
-				_numPendingPhotos=_numPendingPhotos - blockSize;
-				string data=convertToJson(countImages);
-				string newFileName=_tagName+"_"+string(_totalBlocks-1)+"_"+string(_totalBlocks);
-				event(newFileName,data);
+				_numPendingPhotos=_numPendingPhotos - _blockSize;
+				_data=convertToJson(countImages);
+				_firstBlockName=bytes32ToString(uintToBytes(_totalBlocks-1));
+				_endBlockName=bytes32ToString(uintToBytes(_totalBlocks));
+				_newFileName=strConcat(_tagName,"_",_firstBlockName,"_",_endBlockName);
+				// _newFileName=_tagName+"_"+string(_totalBlocks-1)+"_"+string(_totalBlocks);
+				newBlockAdded(_newFileName,_data);
 				putInNewBlock();
 			}
 		}
@@ -77,34 +146,45 @@ contract Tag {
 			_fileSystemOccupied=false;
 		}
 	}
+	
+	string _dataNowRecreate;
+	string _fileNameRecreate;
+	string _firstBlockRecreate;
+	string _endBlockRecreate;
 
-	function recreateBlock(Photo[] blockPhotos,uint currBlockIndex){
+	function recreateBlock(Photo[] blockPhotos,uint currBlockIndex) internal {
 		uint countImages=0;
 		while(countImages<blockPhotos.length){
 			_createNewBlockForPhotos[countImages]=blockPhotos[countImages];
 			countImages++;
 		}
-		string data=convertToJson(countImages);
-		string fileName=_tagName+"_"+string(currBlockIndex)+"_"+string(currBlockIndex+1);
-		event(fileName,data);
+		_dataNowRecreate=convertToJson(countImages);
+		_firstBlockRecreate=bytes32ToString(uintToBytes(currBlockIndex));
+		_endBlockRecreate=bytes32ToString(uintToBytes(currBlockIndex+1));
+		_fileNameRecreate=strConcat(_tagName,_firstBlockRecreate,_endBlockRecreate,"","");
+// 		_fileNameRcreate=_tagName+"_"+string(currBlockIndex)+"_"+string(currBlockIndex+1);
+		newBlockAdded(_fileNameRecreate,_dataNowRecreate);
 	}
+	
+	Photo[] _recreateBlockPhotos;
 
 	function deletePhoto(string hash,string thumbNailHash){
 		_getUserCount[hash]--;
 		if(_getUserCount[hash]==0){
-			while(!_fileSystemOccupied){};
+			while(!_fileSystemOccupied){
+			    uint t1=10;
+			}
 			_fileSystemOccupied=true;
 			uint currPhotoIndex=_photosIndex[hash];
 			uint photoBlockId=currPhotoIndex/10;
 			uint photoBlockIndex=currPhotoIndex%10;
 			_photos[currPhotoIndex].isDeleted=true;
-			Photo[] recreateBlockPhotos;
 			for(uint index=photoBlockId*10;index<(photoBlockId+1)*10;index++){
 				if(!_photos[index].isDeleted){
-					recreateBlockPhotos.push(_photos[index]);
+					_recreateBlockPhotos.push(_photos[index]);
 				}
 			}
-			recreateBlock(recreateBlockPhotos,currPhotoIndex/10);
+			recreateBlock(_recreateBlockPhotos,currPhotoIndex/10);
 			_fileSystemOccupied=false;
 		}
 	}
@@ -116,9 +196,9 @@ contract Tag {
 		else{
 			while(!_fileSystemOccupied){}
 			_fileSystemOccupied=true;
-			_pedingPhotos[_numPendingPhotos].hash=hash;
-			_pedingPhotos[_numPendingPhotos].thumbNailHash=thumbNailHash;
-			_pedingPhotos[_numPendingPhotos].timestamp=now;
+			_pendingPhotos[_numPendingPhotos].hash=hash;
+			_pendingPhotos[_numPendingPhotos].thumbNailHash=thumbNailHash;
+			_pendingPhotos[_numPendingPhotos].timestamp=now;
 			_numPendingPhotos++;
 			_fileSystemOccupied=false;
 		}
