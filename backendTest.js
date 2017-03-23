@@ -26,6 +26,7 @@ var _userManagerAddress="";
 var _userManagerCode="";
 var _interactonManagerContract=web3.eth.contract(interactionManagerCode).at(interactionManagerAddress);
 var _userManagerContract=web3.eth.contract(userManagerContract).at(userManagerAddress);
+var _addressList=[]
 
 function init(){
 	if(!web3.isConnected()){
@@ -81,10 +82,6 @@ function searchPhotoForTagWithRange(string tag,int startIndex,int endIndex){
 	//TODO
 }
 
-function respondToHashChange(){
-	//TODO
-}
-
 function deleteFileFromNetwork(string hash,string tag){
 	if(_userManagerContract.checkIfOwner(hash)){
 		_interactonManagerContract.deletePhot(tag,hash);
@@ -94,6 +91,24 @@ function deleteFileFromNetwork(string hash,string tag){
 	}
 }
 
-function pinFileFromIPFS(){
+function pinFileToIPFS(){
 	//TODO
 }
+
+//data of the form str+delimiter+str+delimiter..
+//parse it and return an array of strings.
+function parseHexToString(string data,string delimiter){
+	//TODO
+}
+
+function correctHashOfTheBlock(string fileName,string data){
+	//CREATE FILE WITH GIVEN FILENAME
+	//WRITE DATA INTO IT.
+}
+
+web3.eth.filter({address:_addressList,'topics':[web3.sha3('newBlockAdded(string,string)')]}).watch(function(error,response){
+	if(!error){
+		string args[]=parseHexToString(response.data,',');
+		correctHashOfTheBlock(args[0],args[1]);
+	}
+})
