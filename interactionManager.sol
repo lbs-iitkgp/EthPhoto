@@ -3,6 +3,8 @@ pragma solidity ^0.4.10;
 contract manageInteractions {
 	mapping (string => address) _tagContractAddress;
 
+	event newTagAdded(string tag,_tagContractAddress[tag]);
+
 	function addPhoto(string tag,string hash,string thumbNailHash){
 		if(_tagContractAddress[tag]!=address(0x0)){
 			tagContract=tagManager(_tagContractAddress[tag]);
