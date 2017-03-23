@@ -20,15 +20,51 @@ else{
 	console.log("Ethereum - connected to RPC server");
 }
 
+var _interactionManagerAddress="";
+var _interactionManagerCode="";
+var _userManagerAddress="";
+var _userManagerCode="";
+var _interactonManagerContract=web3.eth.contract(interactionManagerCode).at(interactionManagerAddress);
+var _userManagerContract=web3.eth.contract(userManagerContract).at(userManagerAddress);
+
+function init(){
+	if(!web3.isConnected()){
+		console.log("Ethereum - no connection to RPC server");
+	}
+	else{
+		console.log("Ethereum - connected to RPC server");
+		ipfs.swarm.peers(function(err,reponse){
+			if(err){
+				console.log(err);
+			}
+			else{
+				console.log("IPFS - connected to "+response.Strings.length + " peers");
+				console.log(response);
+			}
+		})
+	}
+}
+
+function getUserAccount(){
+	if(web3.eth.accounts.length==0){
+		console.log("No account found. Create a new account.");
+	}
+	else{
+		console.log("Account found: " + web3.eth.accounts[0]);
+	}
+}
+
 function createNewUserAccount(){
-	//TODO
+	//TODO not yet supported by geth-js API.
 }
 
-function unlockUserAccount(){
-	//TODO
+function unlockUserAccount(string passWord){
+	var account=getUserAccount();
+	//TODO not supported by geth-js API.
 }
 
-function uploadFileToIPFS(){
+// saving all files in .EthPhoto/Photos
+function uploadFileToIPFS(string pathToFile){
 	//TODO
 }
 
@@ -36,11 +72,12 @@ function uploadHashToEthereum(){
 	//TODO
 }
 
-function downloadFileGivenHash(){
+function downloadFileGivenHash(string hash){
 	//TODO
 }
 
-function searchPhotoForTagWithRange(){
+//search in files inside .EthPhoto/searchBlocks
+function searchPhotoForTagWithRange(string tag,int startIndex,int endIndex){
 	//TODO
 }
 
@@ -48,8 +85,13 @@ function respondToHashChange(){
 	//TODO
 }
 
-function deleteFileFromNetwork(){
-	//TODO
+function deleteFileFromNetwork(string hash,string tag){
+	if(_userManagerContract.checkIfOwner(hash)){
+		_interactonManagerContract.deletePhot(tag,hash);
+	}
+	else{
+		console.log("you are not the owner! :| ");
+	}
 }
 
 function pinFileFromIPFS(){
