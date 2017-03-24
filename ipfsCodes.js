@@ -1,26 +1,37 @@
 const fs=require('fs')
-const Web3=require('web3')
+const geth=require('geth')
+const web3=require('web3')
 const ipfsApi=require('ipfs-api')
 const concat = require('concat-stream')
 
 var ipfsHost='localhost';
 var ipfsAPIPort='5001';
 var ipfsWebPort='8080';
+var ipfs=ipfsApi(ipfsHost,ipfsAPIPort);
+
 var web3Host='http://localhost';
 var web3Port='8545';
-var web3=new Web3();
-web3.setProvider(new web3.providers.HttpProvider(web3Host + ':' + web3Port));
-var ipfs=ipfsApi(ipfsHost,ipfsAPIPort);
-console.log(ipfs);
-var account=web3.eth.accounts[0];
 
-//check if web3 connected
-if(!web3.isConnected()){
-	console.error("Ethereum - no connection to RPC server");
+var options = {
+	networkid : "123",
+	rpc : null,
+	datadir : "~/.ethereum-opensoft/",
+	nodiscover : null
 }
-else{
-	console.log("Ethereum - connected to RPC server");
-}
+
+geth.start(options, function (err, proc) {
+	if (err) return console.log(err);
+
+	web3.setProvider(new web3.providers.HttpProvider(web3Host + ':' + web3Port));	
+	if(web3.isConnected()) {
+		console.log("Ethereum - connected to RPC server");
+	}
+	else {
+		console.error("Ethereum - no connection to RPC server");
+	}
+	var account = web3.eth.accounts[0];
+	getEthBalance(account);
+});
 
 function findPeers(){
 	ipfs.swarm.peers(function(err,peerInfos){
@@ -44,7 +55,7 @@ function init(){
 	})
 }
 
-function getEthBalance(){
+function getEthBalance(account){
 	web3.eth.getBalance(account,function(err,balance){
 		console.log(parseFloat(web3.fromWei(balance,'ether')));
 	});
