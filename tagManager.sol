@@ -236,10 +236,16 @@ contract tagManager {
 			return false;
 		}
 	}
+
+	function greet() public payable {
+		functionStatus("FUNC_GREET_BITCH!");
+	}
 }
 
 contract manageInteractions {
     mapping (string => address) _tagContractAddress;
+
+    event functionStatus(string message);
 
     function addPhoto(string tag,string hash,string thumbNailHash) payable {
 		functionStatus("FUNC_BEGIN_addPhoto");
@@ -262,7 +268,7 @@ contract manageInteractions {
         else{
             throw ;
         }
-		functionStatus("FUNC_END_deletePhoto");
+        functionStatus("FUNC_END_deletePhoto");
     }
 
     function viewPhoto(string hash,string tag) payable returns (bool){
@@ -279,9 +285,12 @@ contract manageInteractions {
         }
     }
 
-    function checkIFTagExists(string tag) payable returns (bool){
+    function checkIFTagExists(string tag) returns (bool){
 		functionStatus("FUNC_BEGIN_checkIfTagExists");
         if(_tagContractAddress[tag]!=address(0x0)){
+        	functionStatus("TAG_EXISTS");
+        	tagManager tagContract=tagManager(_tagContractAddress[tag]);
+        	tagContract.greet();
 			functionStatus("FUNC_END_checkIfTagExists");
             return true;
         }
@@ -291,9 +300,31 @@ contract manageInteractions {
         }
     }
 
-    function addTagContract(string tag, address contractAddress) payable {
+    function parseAddr(string _a) internal returns (address){
+        bytes memory tmp = bytes(_a);
+        uint160 iaddr = 0;
+        uint160 b1;
+        uint160 b2;
+        for (uint i=2; i<2+2*20; i+=2){
+            iaddr *= 256;
+            b1 = uint160(tmp[i]);
+            b2 = uint160(tmp[i+1]);
+            if ((b1 >= 97)&&(b1 <= 102)) b1 -= 87;
+            else if ((b1 >= 48)&&(b1 <= 57)) b1 -= 48;
+            if ((b2 >= 97)&&(b2 <= 102)) b2 -= 87;
+            else if ((b2 >= 48)&&(b2 <= 57)) b2 -= 48;
+            iaddr += (b1*16+b2);
+        }
+        return address(iaddr);
+    }
+
+    function getTagContractAddress(string tag) returns(string) constant{
+    	returns _tagContractAddress[tag];
+    }   
+
+    function addTagContract(string tag, string contractAddress) payable {
         functionStatus("FUNC_BEGIN_addTagContract");
-		_tagContractAddress[tag] = contractAddress;
+		_tagContractAddress[tag] = parseAddr(contractAddress);
 		functionStatus("FUNC_END_addTagContract");
     }
 }
