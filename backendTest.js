@@ -19,12 +19,12 @@ else{
 	console.log("Ethereum - connected to RPC server");
 }
 
-var _interactionManagerAddress="";
-var _interactionManagerCode="";
-var _userManagerAddress="";
-var _userManagerCode="";
-var _interactonManagerContract=web3.eth.contract(interactionManagerCode).at(interactionManagerAddress);
-var _userManagerContract=web3.eth.contract(userManagerContract).at(userManagerAddress);
+var _interactionManagerAddress="0xa2c1450d9a3015094ac46ea73faca5157f3d7ed7";
+var _interactionManagerCode=[{"constant":false,"inputs":[{"name":"tag","type":"string"}],"name":"checkIFTagExists","outputs":[{"name":"","type":"bool"}],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"hash","type":"string"},{"name":"tag","type":"string"}],"name":"viewPhoto","outputs":[{"name":"","type":"bool"}],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"tag","type":"string"},{"name":"hash","type":"string"},{"name":"thumbNailHash","type":"string"}],"name":"deletePhoto","outputs":[],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"tag","type":"string"},{"name":"hash","type":"string"},{"name":"thumbNailHash","type":"string"}],"name":"addPhoto","outputs":[],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"tag","type":"string"},{"name":"contractAddress","type":"address"}],"name":"addTagContract","outputs":[],"payable":true,"type":"function"}];
+// var _userManagerAddress="";
+// var _userManagerCode="";
+var _interactonManagerContract=web3.eth.contract(_interactionManagerCode).at(_interactionManagerAddress);
+// var _userManagerContract=web3.eth.contract(userManagerContract).at(userManagerAddress);
 var _addressList=[]
 
 function init(){
@@ -71,6 +71,15 @@ function uploadFileToIPFS(pathToFile){
 // function uploadHashToEthereum(){
 // 	//TODO
 // }
+
+function addTag(tag, address) {
+	_interactonManagerContract.addTagContract(tag, address, function(err, response) {
+		console.log(err);
+		console.log(response);
+	});
+}
+
+addTag("tree", "0x6f4c1f319f77a14f2ce9b522cc41922e2b2ef1e5");
 
 function downloadFileGivenHash(multiHash){
 	var writeStream=fs.createWriteStream(hash);
