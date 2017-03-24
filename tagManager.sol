@@ -13,6 +13,7 @@ contract tagManager {
 
 	event newBlockAdded(string tagName,string data);
 	event messagePrompt(string message);
+	event functionStatus(string message);
 
 	mapping (uint => Photo) _photos;
 	
@@ -35,14 +36,17 @@ contract tagManager {
 	string _tagName;
 
 	function tagManager(string tagName){
+		functionStatus("FUNC_BEGIN_tagManager_");
 		_blockSize=3;
 		_fileSystemOccupied=false;
 		_totalBlocks=0;
 		_numPendingPhotos=0;
 		_tagName=tagName;
+		functionStatus("FUNC_END_tagManager_");
 	}
 	
 	function strConcat(string _a, string _b, string _c, string _d, string _e) internal returns (string){
+		functionStatus("FUNC_BEGIN_strConcat_");
         bytes memory _ba = bytes(_a);
         bytes memory _bb = bytes(_b);
         bytes memory _bc = bytes(_c);
@@ -56,6 +60,7 @@ contract tagManager {
         for (i = 0; i < _bc.length; i++) babcde[k++] = _bc[i];
         for (i = 0; i < _bd.length; i++) babcde[k++] = _bd[i];
         for (i = 0; i < _be.length; i++) babcde[k++] = _be[i];
+        functionStatus("FUNC_END_strConcat_");
         return string(babcde);
     }
     
@@ -63,8 +68,10 @@ contract tagManager {
     string _secondPart;
     
     function constrcutHashThumbNailString(string hash,string thumbNailHash) payable returns (string){
+    	functionStatus("FUNC_BEGIN_constrcutHashThumbNailString_");
         _firstPart=strConcat("{hash:",hash,",","thumbNailHash:",thumbNailHash);
         _secondPart=strConcat(_firstPart,"}","","","");
+        functionStatus("FUNC_END_constrcutHashThumbNailString_");
         return _secondPart;
     }
     
@@ -73,6 +80,7 @@ contract tagManager {
     string _finalString;
 
 	function convertToJson(uint arrLength) constant returns (string){
+		functionStatus("FUNC_BEGIN_convertToJson_");
 	    _finalString="";
 		for(uint index=0;index<arrLength;index++){
 		    _currentElement=constrcutHashThumbNailString(_createNewBlockForPhotos[index].hash,_createNewBlockForPhotos[index].thumbNailHash);
@@ -84,6 +92,7 @@ contract tagManager {
 			}
 		}
 		_finalString=strConcat("{[",_finalString,"]}","","");
+		functionStatus("FUNC_END_convertToJson_");
 		return _finalString;
 	}
 	
@@ -93,6 +102,7 @@ contract tagManager {
 	string _endBlockName;
 	
 	function uintToBytes(uint v) constant returns (bytes32 ret) {
+		functionStatus("FUNC_BEGIN_uintToBytes_");
         if (v == 0) {
             ret = '0';
         }
@@ -103,10 +113,12 @@ contract tagManager {
                 v /= 10;
             }
         }
+        functionStatus("FUNC_END_uintToBytes_");
         return ret;
     }
     
     function bytes32ToString(bytes32 x) constant returns (string) {
+    	functionStatus("FUNC_BEGIN_bytes32ToString_");
         bytes memory bytesString = new bytes(32);
         uint charCount = 0;
         for (uint j = 0; j < 32; j++) {
@@ -120,10 +132,12 @@ contract tagManager {
         for (j = 0; j < charCount; j++) {
             bytesStringTrimmed[j] = bytesString[j];
         }
+        functionStatus("FUNC_END_bytes32ToString_");
         return string(bytesStringTrimmed);
     }
 
 	function putInNewBlock() payable {
+		functionStatus("FUNC_BEGIN_putInNewBlock");
 		if(_numPendingPhotos>_blockSize){
 			if(!_fileSystemOccupied){
 				_fileSystemOccupied=true;
@@ -146,6 +160,7 @@ contract tagManager {
 		else{
 			_fileSystemOccupied=false;
 		}
+		functionStatus("FUNC_END_putInNewBlock");
 	}
 	
 	string _dataNowRecreate;
