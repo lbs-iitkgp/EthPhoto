@@ -19,14 +19,21 @@ else{
 	console.log("Ethereum - connected to RPC server");
 }
 
-var _interactionManagerAddress="0xa2c1450d9a3015094ac46ea73faca5157f3d7ed7";
-var _interactionManagerCode=[{"constant":false,"inputs":[{"name":"tag","type":"string"}],"name":"checkIFTagExists","outputs":[{"name":"","type":"bool"}],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"hash","type":"string"},{"name":"tag","type":"string"}],"name":"viewPhoto","outputs":[{"name":"","type":"bool"}],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"tag","type":"string"},{"name":"hash","type":"string"},{"name":"thumbNailHash","type":"string"}],"name":"deletePhoto","outputs":[],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"tag","type":"string"},{"name":"hash","type":"string"},{"name":"thumbNailHash","type":"string"}],"name":"addPhoto","outputs":[],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"tag","type":"string"},{"name":"contractAddress","type":"address"}],"name":"addTagContract","outputs":[],"payable":true,"type":"function"}];
+var _interactionManagerAddress="0x0fefda4fcdc4b9f4127c8fd1046d28f77b1de5d0";
+var _interactionManagerCode=[{"constant":false,"inputs":[{"name":"tag","type":"string"}],"name":"checkIFTagExists","outputs":[{"name":"","type":"bool"}],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"hash","type":"string"},{"name":"tag","type":"string"}],"name":"viewPhoto","outputs":[{"name":"","type":"bool"}],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"tag","type":"string"},{"name":"hash","type":"string"},{"name":"thumbNailHash","type":"string"}],"name":"deletePhoto","outputs":[],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"tag","type":"string"},{"name":"hash","type":"string"},{"name":"thumbNailHash","type":"string"}],"name":"addPhoto","outputs":[],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"tag","type":"string"},{"name":"contractAddress","type":"address"}],"name":"addTagContract","outputs":[],"payable":true,"type":"function"},{"anonymous":false,"inputs":[{"indexed":false,"name":"message","type":"string"}],"name":"functionStatus","type":"event"}];
+
+var _tagManagerAddress="0x227580b1b0a951b1e644b25878c131d2ea26e3c8"
+var _tagManagerCode=[{"constant":false,"inputs":[{"name":"hash","type":"string"}],"name":"checkIfPhotoExists","outputs":[{"name":"","type":"bool"}],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"hash","type":"string"},{"name":"thumbNailHash","type":"string"}],"name":"addNewPhoto","outputs":[],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"hash","type":"string"},{"name":"thumbNailHash","type":"string"}],"name":"deletePhoto","outputs":[],"payable":true,"type":"function"},{"constant":true,"inputs":[{"name":"x","type":"bytes32"}],"name":"bytes32ToString","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"v","type":"uint256"}],"name":"uintToBytes","outputs":[{"name":"ret","type":"bytes32"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"putInNewBlock","outputs":[],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"hash","type":"string"},{"name":"thumbNailHash","type":"string"}],"name":"constrcutHashThumbNailString","outputs":[{"name":"","type":"string"}],"payable":true,"type":"function"},{"constant":true,"inputs":[{"name":"arrLength","type":"uint256"}],"name":"convertToJson","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"inputs":[{"name":"tagName","type":"string"}],"payable":false,"type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"name":"tagName","type":"string"},{"indexed":false,"name":"data","type":"string"}],"name":"newBlockAdded","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"message","type":"string"}],"name":"messagePrompt","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"message","type":"string"}],"name":"functionStatus","type":"event"}];
+
 // var _userManagerAddress="";
-var tagManagerAddress=new web3.eth.iban("6f4c1f319f77a14f2ce9b522cc41922e2b2ef1e5");
 // var _userManagerCode="";
-var _interactonManagerContract=web3.eth.contract(_interactionManagerCode).at(_interactionManagerAddress);
+
+var _interactionManagerContract=web3.eth.contract(_interactionManagerCode).at(_interactionManagerAddress);
+var _tagManagerContract=web3.eth.contract(_tagManagerCode).at(_tagManagerAddress);
 // var _userManagerContract=web3.eth.contract(userManagerContract).at(userManagerAddress);
-var _addressList=[]
+
+var _addressList=["0x0fefda4fcdc4b9f4127c8fd1046d28f77b1de5d0"]
+var _allContracts=[_interactionManagerContract, _tagManagerContract]
 
 function init(){
 	if(!web3.isConnected()){
@@ -73,14 +80,7 @@ function uploadFileToIPFS(pathToFile){
 // 	//TODO
 // }
 
-function addTag(tag, address) {
-	_interactonManagerContract.addTagContract(tag, address,{from:web3.eth.accounts[0]}, function(err, response) {
-		console.log(err);
-		console.log(response);
-	});
-}
-
-addTag("tree","0x6f4c1f319f77a14f2ce9b522cc41922e2b2ef1e5");
+console.log(_interactionManagerContract.addTagContract("tree", "0x227580b1b0a951b1e644b25878c131d2ea26e3c8",{from:web3.eth.accounts[0]}));
 
 function downloadFileGivenHash(multiHash){
 	var writeStream=fs.createWriteStream(hash);
@@ -153,10 +153,20 @@ function pinFileToIPFS(){
 // 	//WRITE DATA INTO IT.
 // }
 
-web3.eth.filter({address:_addressList,'topics':[web3.sha3('newBlockAdded(string,string)')]}).watch(function(error,response){
+_allContracts.forEach(function(value) {
+	value.functionStatus().watch(function(err, response) {
+		if(err) {
+			console.log(err);
+		} else {
+			console.log(response);
+		}
+	});
+});
+
+web3.eth.filter({address:_addressList,'topics':[web3.sha3('functionStatus(string)')]}).watch(function(error,response){
 	if(!error){
 		console.log(response);
-		// string args[]=parseHexToString(response.data,',');
-		// correctHashOfTheBlock(args[0],args[1]);
+//		string args[]=parseHexToString(response.data,',');
+//		correctHashOfTheBlock(args[0],args[1]);
 	}
 })

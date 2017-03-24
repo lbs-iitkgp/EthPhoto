@@ -228,17 +228,21 @@ contract tagManager {
 	function checkIfPhotoExists(string hash) payable returns (bool){
 		functionStatus("FUNC_BEGIN_checkIfPhotoExists");
 		if(_getUserCount[hash]>=1){
+			functionStatus("FUNC_END_checkIfPhotoExists");
 			return true;
 		}
 		else{
+			functionStatus("FUNC_END_checkIfPhotoExists");
 			return false;
 		}
-		functionStatus("FUNC_END_checkIfPhotoExists");
+
 	}
 }
 
 contract manageInteractions {
     mapping (string => address) _tagContractAddress;
+
+    event functionStatus(string message);
 
     function addPhoto(string tag,string hash,string thumbNailHash) payable {
 		functionStatus("FUNC_BEGIN_addPhoto");
@@ -261,7 +265,7 @@ contract manageInteractions {
         else{
             throw ;
         }
-		functionStatus("FUNC_END_deletePhoto");
+        functionStatus("FUNC_END_deletePhoto");
     }
 
     function viewPhoto(string hash,string tag) payable returns (bool){
@@ -269,23 +273,25 @@ contract manageInteractions {
         if(_tagContractAddress[tag]!=address(0x0)){
             tagManager tagContract=tagManager(_tagContractAddress[tag]);
             bool picExists=tagContract.checkIfPhotoExists(hash);
+			functionStatus("FUNC_END_viewPhoto");
             return picExists;
         }
         else{
+			functionStatus("FUNC_END_viewPhoto");
             return false;
         }
-		functionStatus("FUNC_END_viewPhoto");
     }
 
     function checkIFTagExists(string tag) payable returns (bool){
 		functionStatus("FUNC_END_checkIfTagExists");
         if(_tagContractAddress[tag]!=address(0x0)){
+            functionStatus("FUNC_END_checkIfTagExists");
             return true;
         }
         else{
+        	functionStatus("FUNC_END_checkIfTagExists");
             return false;
         }
-		functionStatus("FUNC_END_checkIfTagExists");
     }
 
     function addTagContract(string tag, address contractAddress) payable {
