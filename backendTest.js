@@ -1,5 +1,5 @@
 const fs=require('fs')
-const Web3=require('web3')
+const web3=require('web3')
 const ipfsApi=require('ipfs-api')
 const concat = require('concat-stream')
 
@@ -8,7 +8,6 @@ var ipfsAPIPort='5001';
 var ipfsWebPort='8080';
 var web3Host='http://localhost';
 var web3Port='8545';
-var web3=new Web3();
 web3.setProvider(new web3.providers.HttpProvider(web3Host + ':' + web3Port));
 var ipfs=ipfsApi(ipfsHost,ipfsAPIPort);
 
@@ -55,34 +54,72 @@ function getUserAccount(){
 	}
 }
 
-function createNewUserAccount(){
-	//TODO not yet supported by geth-js API.
-}
+// function createNewUserAccount(){
+// 	//TODO not yet supported by geth-js API.
+// }
 
-function unlockUserAccount(string passWord){
-	var account=getUserAccount();
-	//TODO not supported by geth-js API.
-}
+// function unlockUserAccount(string passWord){
+// 	var account=getUserAccount();
+// 	//TODO not supported by geth-js API.
+// }
 
 // saving all files in .EthPhoto/Photos
-function uploadFileToIPFS(string pathToFile){
+function uploadFileToIPFS(pathToFile){
 	//TODO
 }
 
-function uploadHashToEthereum(){
-	//TODO
-}
+// function uploadHashToEthereum(){
+// 	//TODO
+// }
 
-function downloadFileGivenHash(string hash){
-	//TODO
+function downloadFileGivenHash(multiHash){
+	var writeStream=fs.createWriteStream(hash);
+	ipfs.files.cat(multiHash,(error,stream)=>{
+		stream.pipe(writeStream,{end:false});
+	});
 }
 
 //search in files inside .EthPhoto/searchBlocks
-function searchPhotoForTagWithRange(string tag,int startIndex,int endIndex){
-	//TODO
+function searchPhotoForTagWithRange(tag,startIndex,endIndex){
+	var dataFromFiles=[];
+	(function loopingOverFiles(indexOfFile){
+		var jsonPromise=new Promise(function(resolve,reject){
+			fs.readFile(tag+'_'+indexOfFile+'_'+(indexOfFile+1)+'.txt','utf8',function(err,data){
+				if(err){
+					console.log(err);
+				}
+				else{
+					var fileData=JSON.parse(data);
+					(function iterateOverData(index){
+						var jsonPromiseData=new Promise(function(resolveData,reject){
+							dataFromFiles.push(fileData["data"][index]);
+							resolveData('done');
+						});
+						jsonPromiseData.then(function(){
+							if(index+1<fileData["data"].length){
+								iterateOverData(index+1);
+							}
+							else{
+								resolve('done');
+							}
+						})
+					})(0);
+				}
+			})
+		});
+		jsonPromise.then(function(){
+			if(indexOfFile+1<endIndex){
+				indexOfFile++;
+				loopingOverFiles(indexOfFile);
+			}
+			else{
+				return dataFromFiles;
+			}
+		})
+	})(startIndex);
 }
 
-function deleteFileFromNetwork(string hash,string tag){
+function deleteFileFromNetwork(hash,tag){
 	if(_userManagerContract.checkIfOwner(hash)){
 		_interactonManagerContract.deletePhot(tag,hash);
 	}
@@ -97,18 +134,19 @@ function pinFileToIPFS(){
 
 //data of the form str+delimiter+str+delimiter..
 //parse it and return an array of strings.
-function parseHexToString(string data,string delimiter){
-	//TODO
-}
+// function parseHexToString(string data,string delimiter){
+// 	//TODO
+// }
 
-function correctHashOfTheBlock(string fileName,string data){
-	//CREATE FILE WITH GIVEN FILENAME
-	//WRITE DATA INTO IT.
-}
+// function correctHashOfTheBlock(string fileName,string data){
+// 	//CREATE FILE WITH GIVEN FILENAME
+// 	//WRITE DATA INTO IT.
+// }
 
 web3.eth.filter({address:_addressList,'topics':[web3.sha3('newBlockAdded(string,string)')]}).watch(function(error,response){
 	if(!error){
-		string args[]=parseHexToString(response.data,',');
-		correctHashOfTheBlock(args[0],args[1]);
+		console.log(response);
+		// string args[]=parseHexToString(response.data,',');
+		// correctHashOfTheBlock(args[0],args[1]);
 	}
 })
