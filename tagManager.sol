@@ -169,7 +169,7 @@ contract tagManager {
 	string _endBlockRecreate;
 
 	function recreateBlock(Photo[] blockPhotos,uint currBlockIndex) internal {
-		functionStatus("FUNC_BEGIN_recreateBlock);
+		functionStatus("FUNC_BEGIN_recreateBlock");
 		uint countImages=0;
 		while(countImages<blockPhotos.length){
 			_createNewBlockForPhotos[countImages]=blockPhotos[countImages];
@@ -180,13 +180,13 @@ contract tagManager {
 		_endBlockRecreate=bytes32ToString(uintToBytes(currBlockIndex+1));
 		_fileNameRecreate=strConcat(_tagName,_firstBlockRecreate,_endBlockRecreate,"","");
 		newBlockAdded(_fileNameRecreate,_dataNowRecreate);
-		functionStatus("FUNC_END_recreateBlock);
+		functionStatus("FUNC_END_recreateBlock");
 	}
 	
 	Photo[] _recreateBlockPhotos;
 
 	function deletePhoto(string hash,string thumbNailHash) public payable {
-		functionStatus("FUNC_BEGIN_deletePhoto);
+		functionStatus("FUNC_BEGIN_deletePhoto");
 		_getUserCount[hash]--;
 		if(_getUserCount[hash]==0){
 			while(!_fileSystemOccupied){
@@ -205,11 +205,11 @@ contract tagManager {
 			recreateBlock(_recreateBlockPhotos,currPhotoIndex/10);
 			_fileSystemOccupied=false;
 		}
-		functionStatus("FUNC_END_deletePhoto);
+		functionStatus("FUNC_END_deletePhoto");
 	}
 
 	function addNewPhoto(string hash,string thumbNailHash) public payable {
-		functionStatus("FUNC_BEGIN_addNewPhoto);
+		functionStatus("FUNC_BEGIN_addNewPhoto");
 		if(_getUserCount[hash]>=1){
 			_getUserCount[hash]=_getUserCount[hash]+1;
 		}
@@ -222,18 +222,18 @@ contract tagManager {
 			_numPendingPhotos++;
 			_fileSystemOccupied=false;
 		}
-		functionStatus("FUNC_END_addNewPhoto);
+		functionStatus("FUNC_END_addNewPhoto");
 	}
 
 	function checkIfPhotoExists(string hash) payable returns (bool){
-		functionStatus("FUNC_BEGIN_checkIfPhotoExists);
+		functionStatus("FUNC_BEGIN_checkIfPhotoExists");
 		if(_getUserCount[hash]>=1){
 			return true;
 		}
 		else{
 			return false;
 		}
-		functionStatus("FUNC_END_checkIfPhotoExists);
+		functionStatus("FUNC_END_checkIfPhotoExists");
 	}
 }
 
@@ -241,7 +241,7 @@ contract manageInteractions {
     mapping (string => address) _tagContractAddress;
 
     function addPhoto(string tag,string hash,string thumbNailHash) payable {
-		functionStatus("FUNC_BEGIN_addPhoto);
+		functionStatus("FUNC_BEGIN_addPhoto");
         if(_tagContractAddress[tag]!=address(0x0)){
             tagManager tagContract=tagManager(_tagContractAddress[tag]);
             tagContract.addNewPhoto(hash,thumbNailHash);
@@ -249,11 +249,11 @@ contract manageInteractions {
         else{
             throw ;
         }
-		functionStatus("FUNC_END_addPhoto);
+		functionStatus("FUNC_END_addPhoto");
     }
 
     function deletePhoto(string tag,string hash,string thumbNailHash) payable {
-		functionStatus("FUNC_BEGIN_deletePhoto);
+		functionStatus("FUNC_BEGIN_deletePhoto");
         if(_tagContractAddress[tag]!=address(0x0)){
             tagManager tagContract=tagManager(_tagContractAddress[tag]);
             tagContract.deletePhoto(hash,thumbNailHash);
@@ -261,11 +261,11 @@ contract manageInteractions {
         else{
             throw ;
         }
-		functionStatus("FUNC_END_deletePhoto);
+		functionStatus("FUNC_END_deletePhoto");
     }
 
     function viewPhoto(string hash,string tag) payable returns (bool){
-		functionStatus("FUNC_BEGIN_viewPhoto);
+		functionStatus("FUNC_BEGIN_viewPhoto");
         if(_tagContractAddress[tag]!=address(0x0)){
             tagManager tagContract=tagManager(_tagContractAddress[tag]);
             bool picExists=tagContract.checkIfPhotoExists(hash);
@@ -274,23 +274,23 @@ contract manageInteractions {
         else{
             return false;
         }
-		functionStatus("FUNC_END_viewPhoto);
+		functionStatus("FUNC_END_viewPhoto");
     }
 
     function checkIFTagExists(string tag) payable returns (bool){
-		functionStatus("FUNC_END_checkIfTagExists);
+		functionStatus("FUNC_END_checkIfTagExists");
         if(_tagContractAddress[tag]!=address(0x0)){
             return true;
         }
         else{
             return false;
         }
-		functionStatus("FUNC_END_checkIfTagExists);
+		functionStatus("FUNC_END_checkIfTagExists");
     }
 
     function addTagContract(string tag, address contractAddress) payable {
-        functionStatus("FUNC_BEGIN_addTagContract);
+        functionStatus("FUNC_BEGIN_addTagContract");
 		_tagContractAddress[tag] = contractAddress;
-		functionStatus("FUNC_END_addTagContract);
+		functionStatus("FUNC_END_addTagContract");
     }
 }
