@@ -22,6 +22,7 @@ else{
 var _interactionManagerAddress="0xa2c1450d9a3015094ac46ea73faca5157f3d7ed7";
 var _interactionManagerCode=[{"constant":false,"inputs":[{"name":"tag","type":"string"}],"name":"checkIFTagExists","outputs":[{"name":"","type":"bool"}],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"hash","type":"string"},{"name":"tag","type":"string"}],"name":"viewPhoto","outputs":[{"name":"","type":"bool"}],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"tag","type":"string"},{"name":"hash","type":"string"},{"name":"thumbNailHash","type":"string"}],"name":"deletePhoto","outputs":[],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"tag","type":"string"},{"name":"hash","type":"string"},{"name":"thumbNailHash","type":"string"}],"name":"addPhoto","outputs":[],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"tag","type":"string"},{"name":"contractAddress","type":"address"}],"name":"addTagContract","outputs":[],"payable":true,"type":"function"}];
 // var _userManagerAddress="";
+var tagManagerAddress=new web3.eth.iban("6f4c1f319f77a14f2ce9b522cc41922e2b2ef1e5");
 // var _userManagerCode="";
 var _interactonManagerContract=web3.eth.contract(_interactionManagerCode).at(_interactionManagerAddress);
 // var _userManagerContract=web3.eth.contract(userManagerContract).at(userManagerAddress);
@@ -73,13 +74,13 @@ function uploadFileToIPFS(pathToFile){
 // }
 
 function addTag(tag, address) {
-	_interactonManagerContract.addTagContract(tag, address, function(err, response) {
+	_interactonManagerContract.addTagContract(tag, address,{from:web3.eth.accounts[0]}, function(err, response) {
 		console.log(err);
 		console.log(response);
 	});
 }
 
-addTag("tree", "0x6f4c1f319f77a14f2ce9b522cc41922e2b2ef1e5");
+addTag("tree","0x6f4c1f319f77a14f2ce9b522cc41922e2b2ef1e5");
 
 function downloadFileGivenHash(multiHash){
 	var writeStream=fs.createWriteStream(hash);
