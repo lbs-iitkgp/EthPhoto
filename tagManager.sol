@@ -34,7 +34,7 @@ contract tagManager {
 
 	string _tagName;
 
-	function Tag(string tagName){
+	function tagManager(string tagName){
 		_blockSize=3;
 		_fileSystemOccupied=false;
 		_totalBlocks=0;
