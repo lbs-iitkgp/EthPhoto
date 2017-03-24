@@ -162,7 +162,6 @@ contract tagManager {
 		_firstBlockRecreate=bytes32ToString(uintToBytes(currBlockIndex));
 		_endBlockRecreate=bytes32ToString(uintToBytes(currBlockIndex+1));
 		_fileNameRecreate=strConcat(_tagName,_firstBlockRecreate,_endBlockRecreate,"","");
-// 		_fileNameRcreate=_tagName+"_"+string(currBlockIndex)+"_"+string(currBlockIndex+1);
 		newBlockAdded(_fileNameRecreate,_dataNowRecreate);
 	}
 	

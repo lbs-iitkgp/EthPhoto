@@ -9,6 +9,7 @@ contract ManageAccount {
 	}
 
 	mapping (uint => Photo) _photos;
+	mapping (string => uint) _ownerOfHash;
 
 	uint _numberOfPhotos;
 
@@ -45,6 +46,15 @@ contract ManageAccount {
 	function accountDelete() {
 		if (isHolder()) {
 			suicide(_accountHolder);
+		}
+	}
+
+	function checkIfOwner(string hash) payable returns(bool){
+		if(_ownerOfHash[hash]!=address(0x0)){
+			return true;
+		}
+		else{
+			return false;
 		}
 	}
 }
