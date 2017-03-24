@@ -1,0 +1,82 @@
+<!Doctype html>
+
+<html >
+	<head>
+		<title>
+			Cities Search
+		</title>
+		<script src ="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.1/angular.min.js">
+		</script>
+		<meta charset="utf-8"/>
+		<link href="http://fonts.googleapis.com/css?family=Cookie|Open+Sans:400,700" rel="stylesheet" />
+		<link href="style.css" rel="stylesheet" />
+		<meta charset="UTF-8">
+		<script src="http://www.openlayers.org/api/OpenLayers.js"></script>
+		<style type="text/css">
+    		html, body, #basicMap {
+      		width: 100%;
+      		height: 100%;
+      		margin: 0;
+    		}
+  		</style>
+  		<script>
+		    var markers = new OpenLayers.Layer.Markers( "Markers" );
+		    map = new OpenLayers.Map("basicMap");
+		    
+		  var fromProjection = new OpenLayers.Projection("EPSG:4326");   // Transform from WGS 1984
+		    var toProjection   = new OpenLayers.Projection("EPSG:900913"); // to Spherical Mercator Projection
+		    var position       = new OpenLayers.LonLat(78.4867, 17.3850).transform( fromProjection, toProjection);
+		    
+		    function init() {
+		      map = new OpenLayers.Map("basicMap");
+		    fromProjection = new OpenLayers.Projection("EPSG:4326");   // Transform from WGS 1984
+		      toProjection   = new OpenLayers.Projection("EPSG:900913"); // to Spherical Mercator Projection
+		     position       = new OpenLayers.LonLat(78.4867, 17.3850).transform( fromProjection, toProjection);
+		     zoom           = 0; 
+		    var lonlat = new OpenLayers.LonLat(87.2320, 22.3460).transform(
+		        new OpenLayers.Projection("EPSG:4326"), // transform from WGS 1984
+		        new OpenLayers.Projection("EPSG:900913") // to Spherical Mercator
+		        );
+		    var mapnik = new OpenLayers.Layer.OSM();
+		    map.addLayer(markers);
+		    markers.addMarker(new OpenLayers.Marker(lonlat));
+		    map.addLayer(mapnik);
+		    map.setCenter(position, zoom );
+		  }
+
+		  
+
+		</script>
+  
+	</head>
+	<body ng-app ="Sample" onload="init();" style = "position: fixed; width: 100%; height: 100%; left: 0; top: 0;z-index : -1;">
+		<!--<div  >-->
+		<div ng-controller ="InstantSearchController" >
+		<div class="bar" style="position: absolute; width: 30%; height: 10%;top :20px; left: 500px;z-index : 1000;">
+			<input type="text" ng-model="searchString" placeholder="Enter City" />
+			
+		</div>
+
+		<ul style = "position: fixed; left:505px ; top: 60px; z-index: 999; background: #ffffff; opacity: 0.7; width : 405px">
+			<li ng-repeat="i in items | searchFor:searchString" >
+				<!--<a href="{{i.url}}"><img ng-src="{{i.image}}" /></a>-->
+				<div ng-controller = "mapMarker">
+					<p ><span ng-click="aa(i)">{{i.city}}</span></p>
+				</div>
+			</li>
+		</ul>
+		<div style="position: absolute; bottom: 140px; right: 30px; z-index: 1000;">
+			<span ng-click = "upload()"><img src="upload.jpg" height="40px" width="40px"></span>
+		</div>
+		</div>
+		<script src = "cities.js">
+			
+		</script>
+		<div id="basicMap">
+
+    </div>
+    
+
+	</body>
+</html>
+
