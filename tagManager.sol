@@ -12,6 +12,7 @@ contract tagManager {
 	}
 
 	event newBlockAdded(string tagName,string data);
+	event messagePrompt(string message);
 
 	mapping (uint => Photo) _photos;
 	
@@ -41,7 +42,7 @@ contract tagManager {
 		_tagName=tagName;
 	}
 	
-	function strConcat(string _a, string _b, string _c, string _d, string _e) internal payable returns (string){
+	function strConcat(string _a, string _b, string _c, string _d, string _e) internal returns (string){
         bytes memory _ba = bytes(_a);
         bytes memory _bb = bytes(_b);
         bytes memory _bc = bytes(_c);
@@ -71,7 +72,7 @@ contract tagManager {
     string _currentElement;
     string _finalString;
 
-	function convertToJson(uint arrLength) constant payable returns (string){
+	function convertToJson(uint arrLength) constant returns (string){
 	    _finalString="";
 		for(uint index=0;index<arrLength;index++){
 		    _currentElement=constrcutHashThumbNailString(_createNewBlockForPhotos[index].hash,_createNewBlockForPhotos[index].thumbNailHash);
@@ -91,7 +92,7 @@ contract tagManager {
 	string _firstBlockName;
 	string _endBlockName;
 	
-	function uintToBytes(uint v) constant payable returns (bytes32 ret) {
+	function uintToBytes(uint v) constant returns (bytes32 ret) {
         if (v == 0) {
             ret = '0';
         }
@@ -105,7 +106,7 @@ contract tagManager {
         return ret;
     }
     
-    function bytes32ToString(bytes32 x) constant payable returns (string) {
+    function bytes32ToString(bytes32 x) constant returns (string) {
         bytes memory bytesString = new bytes(32);
         uint charCount = 0;
         for (uint j = 0; j < 32; j++) {
@@ -152,7 +153,7 @@ contract tagManager {
 	string _firstBlockRecreate;
 	string _endBlockRecreate;
 
-	function recreateBlock(Photo[] blockPhotos,uint currBlockIndex) payable {
+	function recreateBlock(Photo[] blockPhotos,uint currBlockIndex) internal {
 		uint countImages=0;
 		while(countImages<blockPhotos.length){
 			_createNewBlockForPhotos[countImages]=blockPhotos[countImages];
@@ -167,7 +168,7 @@ contract tagManager {
 	
 	Photo[] _recreateBlockPhotos;
 
-	function deletePhoto(string hash,string thumbNailHash) payable {
+	function deletePhoto(string hash,string thumbNailHash) public payable {
 		_getUserCount[hash]--;
 		if(_getUserCount[hash]==0){
 			while(!_fileSystemOccupied){
@@ -188,7 +189,7 @@ contract tagManager {
 		}
 	}
 
-	function addNewPhoto(string hash,string thumbNailHash) payable {
+	function addNewPhoto(string hash,string thumbNailHash) public payable {
 		if(_getUserCount[hash]>=1){
 			_getUserCount[hash]=_getUserCount[hash]+1;
 		}
@@ -218,7 +219,7 @@ contract manageInteractions {
 
     function addPhoto(string tag,string hash,string thumbNailHash) payable {
         if(_tagContractAddress[tag]!=address(0x0)){
-            tagContract=tagManager(_tagContractAddress[tag]);
+            tagManager tagContract=tagManager(_tagContractAddress[tag]);
             tagContract.addNewPhoto(hash,thumbNailHash);
         }
         else{
@@ -226,9 +227,9 @@ contract manageInteractions {
         }
     }
 
-    function deletePhoto() payable {
+    function deletePhoto(string tag,string hash,string thumbNailHash) payable {
         if(_tagContractAddress[tag]!=address(0x0)){
-            tagContract=tagManager(_tagContractAddress[tag]);
+            tagManager tagContract=tagManager(_tagContractAddress[tag]);
             tagContract.deletePhoto(hash,thumbNailHash);
         }
         else{
@@ -238,7 +239,7 @@ contract manageInteractions {
 
     function viewPhoto(string hash,string tag) payable returns (bool){
         if(_tagContractAddress[tag]!=address(0x0)){
-            tagContract=tagManager(_tagContractAddress[tag]);
+            tagManager tagContract=tagManager(_tagContractAddress[tag]);
             bool picExists=tagContract.checkIfPhotoExists(hash);
             return picExists;
         }
@@ -260,4 +261,3 @@ contract manageInteractions {
         _tagContractAddress[tag] = contractAddress;
     }
 }
-
