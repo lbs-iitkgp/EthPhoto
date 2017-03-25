@@ -1,0 +1,25 @@
+{
+  "name": "ethphoto",
+  "version": "1.0.0",
+  "description": "Blockchian-based photo-sharing app.",
+  "dependencies": {
+	"fs" : "0.0.1-security",
+    "geth" : "0.3.0",
+	"web3" : "0.13.0",
+	"ipfs-api" : "13.0.0"
+  },
+  "main": "backendTest.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lbs-iitkgp/EthPhoto.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lbs-iitkgp/EthPhoto/issues"
+  },
+  "homepage": "https://github.com/lbs-iitkgp/EthPhoto#readme"
+}
