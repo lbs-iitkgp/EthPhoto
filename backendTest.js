@@ -20,24 +20,6 @@ else{
 	console.log("Ethereum - connected to RPC server");
 }
 
-var _interactionManagerAddress="0x152f3027e21e4402855a7c80ad3c5322b38baa59";
-var _interactionManagerCode=[{"constant":false,"inputs":[{"name":"tag","type":"string"},{"name":"contractAddress","type":"string"}],"name":"addTagContract","outputs":[],"payable":true,"type":"function"},{"constant":true,"inputs":[{"name":"tag","type":"string"}],"name":"getTagContractAddress","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"anonymous":false,"inputs":[{"indexed":false,"name":"message","type":"string"}],"name":"functionStatus","type":"event"}];
-var _interactionManagerContract=web3.eth.contract(_interactionManagerCode).at(_interactionManagerAddress);
-
-var _tagManagerAddress="0x8a4fa035c9bb538f9394c0e5a1d4e3007c84a684"
-var _tagManagerCode=[{"constant":false,"inputs":[{"name":"hash","type":"string"},{"name":"hashThumbNail","type":"string"}],"name":"addNewPhoto","outputs":[],"payable":true,"type":"function"},{"constant":false,"inputs":[],"name":"greet","outputs":[],"payable":true,"type":"function"},{"inputs":[{"name":"tagName","type":"string"}],"payable":false,"type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"name":"tagName","type":"string"},{"indexed":false,"name":"data","type":"string"}],"name":"newBlockAdded","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"message","type":"string"}],"name":"messagePrompt","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"message","type":"string"}],"name":"functionStatus","type":"event"}];
-// console.log(web3.eth.estimateGas({data:_tagManagerCode}));
-var _tagManagerContract=web3.eth.contract(_tagManagerCode).at(_tagManagerAddress);
-
-var _stackAddress="0x459682c0b67a647d9e74118274a9a80c4d18ec6c";
-var _stackCode=[{"constant":false,"inputs":[],"name":"greet","outputs":[],"payable":true,"type":"function"},{"anonymous":false,"inputs":[{"indexed":false,"name":"tagName","type":"string"},{"indexed":false,"name":"data","type":"string"}],"name":"newBlockAdded","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"message","type":"string"}],"name":"messagePrompt","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"message","type":"string"}],"name":"functionStatus","type":"event"}];
-var _stackContract=web3.eth.contract(_stackCode).at(_stackAddress);
-var _stackContract2=web3.eth.contract(_stackCode).at("0x304beedade15c5ae8f165e2f82fb2a9a8a5c429e");
-// var _userManagerAddress="";
-// var _userManagerCode="";
-
-// var _userManagerContract=web3.eth.contract(userManagerContract).at(userManagerAddress);
-
 var _allContracts=[_interactionManagerContract, _tagManagerContract,_stackContract];
 
 function init(){
@@ -66,8 +48,6 @@ function getUserAccount(){
 		console.log("Account found: " + web3.eth.accounts[0]);
 	}
 }
-
-// console.log(_interactionManagerContract.addTagContract("tree", _tagManagerAddress,{from:web3.eth.accounts[0]}));
 
 function downloadFileGivenHash(multiHash){
 	var writeStream=fs.createWriteStream(hash);
@@ -125,18 +105,6 @@ function deleteFileFromNetwork(hash,tag){
 	}
 }
 
-function pinFileToIPFS(){
-	//TODO
-}
-
-function getTagContractFromTag(tagName){
-	_interactionManagerContract.getTagContractAddress(tagName,(error,response)=>{
-		console.log(response);
-		var _tagManagerContract=web3.eth.contract(_tagManagerCode).at(response);
-		return _tagManagerContract;
-	})
-}
-
 function searchPhotoForTagWithRange(tag,startIndex,endIndex){
 	(function loopingOverFiles(indexOfFile){
 		var jsonPromise=new Promise(function(resolve,reject){
@@ -188,16 +156,6 @@ function processHex(hex){
 	return stringFromHex.replace(" ","");
 }
 
-function addPhoto(response){
-	var hash=processHex(response[1]["data"]);
-	var thumbNailHash=processHex(response[2]["data"]);
-	var tag=processHex(response[3]["data"]);
-	var geoLocation=processHex(response[4]["data"]);
-	//get this from IPFS
-	//add to the specific block
-}
-
-
 function computeOnTransaction(transactionHash){
 	web3.eth.getTransactionReceipt(transactionHash,(error,response)=>{
 		if(!error){
@@ -207,7 +165,7 @@ function computeOnTransaction(transactionHash){
 					console.log("AddPhoto");
 					addPhoto(response["logs"]);
 				}
-				else if(processHex(response["logs"][0]["data")=="DeletePhoto"){
+				else if(processHex(response["logs"][0]["data"])=="DeletePhoto"){
 					console.log("DeletePhoto");
 					deletePhot(response["logs"]);
 				}
