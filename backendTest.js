@@ -10,6 +10,7 @@ var web3Host='http://localhost';
 var web3Port='8545';
 web3.setProvider(new web3.providers.HttpProvider(web3Host + ':' + web3Port));
 var ipfs=ipfsApi(ipfsHost,ipfsAPIPort);
+var lastBlockNumber=0;
 
 //check if web3 connected
 if(!web3.isConnected()){
@@ -19,20 +20,25 @@ else{
 	console.log("Ethereum - connected to RPC server");
 }
 
-var _interactionManagerAddress="0x3bee3749b7a19a5ceb6d2d056a9178529f2c531c";
-var _interactionManagerCode=[{"constant":false,"inputs":[{"name":"tag","type":"string"}],"name":"checkIFTagExists","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"hash","type":"string"},{"name":"tag","type":"string"}],"name":"viewPhoto","outputs":[{"name":"","type":"bool"}],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"tag","type":"string"},{"name":"contractAddress","type":"string"}],"name":"addTagContract","outputs":[],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"tag","type":"string"},{"name":"hash","type":"string"},{"name":"thumbNailHash","type":"string"}],"name":"deletePhoto","outputs":[],"payable":true,"type":"function"},{"constant":true,"inputs":[{"name":"tag","type":"string"}],"name":"getTagContractAddress","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"tag","type":"string"},{"name":"hash","type":"string"},{"name":"thumbNailHash","type":"string"}],"name":"addPhoto","outputs":[],"payable":true,"type":"function"},{"anonymous":false,"inputs":[{"indexed":false,"name":"message","type":"string"}],"name":"functionStatus","type":"event"}];
+var _interactionManagerAddress="0x152f3027e21e4402855a7c80ad3c5322b38baa59";
+var _interactionManagerCode=[{"constant":false,"inputs":[{"name":"tag","type":"string"},{"name":"contractAddress","type":"string"}],"name":"addTagContract","outputs":[],"payable":true,"type":"function"},{"constant":true,"inputs":[{"name":"tag","type":"string"}],"name":"getTagContractAddress","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"anonymous":false,"inputs":[{"indexed":false,"name":"message","type":"string"}],"name":"functionStatus","type":"event"}];
+var _interactionManagerContract=web3.eth.contract(_interactionManagerCode).at(_interactionManagerAddress);
 
-var _tagManagerAddress="0x53e833743dc3af4b02fab8eb9b8071cb99485a77"
-var _tagManagerCode=[{"constant":false,"inputs":[{"name":"hash","type":"string"}],"name":"checkIfPhotoExists","outputs":[{"name":"","type":"bool"}],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"hash","type":"string"},{"name":"thumbNailHash","type":"string"}],"name":"addNewPhoto","outputs":[],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"hash","type":"string"},{"name":"thumbNailHash","type":"string"}],"name":"deletePhoto","outputs":[],"payable":true,"type":"function"},{"constant":true,"inputs":[{"name":"x","type":"bytes32"}],"name":"bytes32ToString","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"v","type":"uint256"}],"name":"uintToBytes","outputs":[{"name":"ret","type":"bytes32"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"putInNewBlock","outputs":[],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"hash","type":"string"},{"name":"thumbNailHash","type":"string"}],"name":"constrcutHashThumbNailString","outputs":[{"name":"","type":"string"}],"payable":true,"type":"function"},{"constant":true,"inputs":[{"name":"arrLength","type":"uint256"}],"name":"convertToJson","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"greet","outputs":[],"payable":true,"type":"function"},{"inputs":[{"name":"tagName","type":"string"}],"payable":false,"type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"name":"tagName","type":"string"},{"indexed":false,"name":"data","type":"string"}],"name":"newBlockAdded","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"message","type":"string"}],"name":"messagePrompt","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"message","type":"string"}],"name":"functionStatus","type":"event"}];
+var _tagManagerAddress="0x8a4fa035c9bb538f9394c0e5a1d4e3007c84a684"
+var _tagManagerCode=[{"constant":false,"inputs":[{"name":"hash","type":"string"},{"name":"hashThumbNail","type":"string"}],"name":"addNewPhoto","outputs":[],"payable":true,"type":"function"},{"constant":false,"inputs":[],"name":"greet","outputs":[],"payable":true,"type":"function"},{"inputs":[{"name":"tagName","type":"string"}],"payable":false,"type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"name":"tagName","type":"string"},{"indexed":false,"name":"data","type":"string"}],"name":"newBlockAdded","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"message","type":"string"}],"name":"messagePrompt","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"message","type":"string"}],"name":"functionStatus","type":"event"}];
+// console.log(web3.eth.estimateGas({data:_tagManagerCode}));
+var _tagManagerContract=web3.eth.contract(_tagManagerCode).at(_tagManagerAddress);
 
+var _stackAddress="0x459682c0b67a647d9e74118274a9a80c4d18ec6c";
+var _stackCode=[{"constant":false,"inputs":[],"name":"greet","outputs":[],"payable":true,"type":"function"},{"anonymous":false,"inputs":[{"indexed":false,"name":"tagName","type":"string"},{"indexed":false,"name":"data","type":"string"}],"name":"newBlockAdded","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"message","type":"string"}],"name":"messagePrompt","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"message","type":"string"}],"name":"functionStatus","type":"event"}];
+var _stackContract=web3.eth.contract(_stackCode).at(_stackAddress);
+var _stackContract2=web3.eth.contract(_stackCode).at("0x304beedade15c5ae8f165e2f82fb2a9a8a5c429e");
 // var _userManagerAddress="";
 // var _userManagerCode="";
 
-var _interactionManagerContract=web3.eth.contract(_interactionManagerCode).at(_interactionManagerAddress);
-var _tagManagerContract=web3.eth.contract(_tagManagerCode).at(_tagManagerAddress);
 // var _userManagerContract=web3.eth.contract(userManagerContract).at(userManagerAddress);
 
-var _allContracts=[_interactionManagerContract, _tagManagerContract]
+var _allContracts=[_interactionManagerContract, _tagManagerContract,_stackContract];
 
 function init(){
 	if(!web3.isConnected()){
@@ -61,26 +67,7 @@ function getUserAccount(){
 	}
 }
 
-// function createNewUserAccount(){
-// 	//TODO not yet supported by geth-js API.
-// }
-
-// function unlockUserAccount(string passWord){
-// 	var account=getUserAccount();
-// 	//TODO not supported by geth-js API.
-// }
-
-// saving all files in .EthPhoto/Photos
-function uploadFileToIPFS(pathToFile){
-	//TODO
-}
-
-// function uploadHashToEthereum(){
-// 	//TODO
-// }
-
-console.log(_interactionManagerContract.addTagContract("tree", "0x53e833743dc3af4b02fab8eb9b8071cb99485a77",{from:web3.eth.accounts[0]}));
-
+// console.log(_interactionManagerContract.addTagContract("tree", _tagManagerAddress,{from:web3.eth.accounts[0]}));
 
 function downloadFileGivenHash(multiHash){
 	var writeStream=fs.createWriteStream(hash);
@@ -142,38 +129,121 @@ function pinFileToIPFS(){
 	//TODO
 }
 
-function checkIfDataReturns(){
-	_interactionManagerContract.getTagContractAddress("tree",(error,response)=>{
-		console.log("lolXD");
+function getTagContractFromTag(tagName){
+	_interactionManagerContract.getTagContractAddress(tagName,(error,response)=>{
 		console.log(response);
-		console.log(error);
+		var _tagManagerContract=web3.eth.contract(_tagManagerCode).at(response);
+		return _tagManagerContract;
 	})
 }
 
-checkIfDataReturns();
+function searchPhotoForTagWithRange(tag,startIndex,endIndex){
+	(function loopingOverFiles(indexOfFile){
+		var jsonPromise=new Promise(function(resolve,reject){
+			fs.readFile(tag+'_'+indexOfFile+'_'+(indexOfFile+1)+'.txt','utf8',function(err,data){
+				if(err){
+					console.log(err);
+				}
+				else{
+					var fileData=JSON.parse(data);
+					(function iterateOverData(index){
+						var jsonPromiseData=new Promise(function(resolveData,reject){
+							dataFromFiles.push(fileData["data"][index]);
+							resolveData('done');
+						});
+						jsonPromiseData.then(function(){
+							if(index+1<fileData["data"].length){
+								iterateOverData(index+1);
+							}
+							else{
+								resolve('done');
+							}
+						})
+					})(0);
+				}
+			})
+		});
+		jsonPromise.then(function(){
+			if(indexOfFile+1<endIndex){
+				indexOfFile++;
+				loopingOverFiles(indexOfFile);
+			}
+			else{
+				return dataFromFiles;
+			}
+		})
+	})(startIndex);
+}
 
-// checkIfDataReturns();
+function hex2a(hex){
+	var str= '';
+	for(var index=0;index<hex.length;index=index+2){
+		str=String.fromCharCode(parseInt(hex.substr(index,2),16));
+	}
+	return str;
+}
 
-// function correctHashOfTheBlock(string fileName,string data){
-// 	//CREATE FILE WITH GIVEN FILENAME
-// 	//WRITE DATA INTO IT.
-// }
+function processHex(hex){
+	var stringFromHex=hex2a(hex);
+	return stringFromHex.replace(" ","");
+}
 
-_allContracts.forEach(function(value) {
-	value.functionStatus().watch(function(err, response) {
-		if(err) {
-			console.log(err);
-		} else {
-			console.log(response);
-			console.log(response["blockNumber"]);
+function addPhoto(response){
+	var hash=processHex(response[1]["data"]);
+	var thumbNailHash=processHex(response[2]["data"]);
+	var tag=processHex(response[3]["data"]);
+	var geoLocation=processHex(response[4]["data"]);
+	//get this from IPFS
+	//add to the specific block
+}
+
+
+function computeOnTransaction(transactionHash){
+	web3.eth.getTransactionReceipt(transactionHash,(error,response)=>{
+		if(!error){
+			console.log(response["logs"]);
+			if(response["logs"].length==4){
+				if(processHex(response["logs"][0]["data"])=="AddPhoto"){
+					console.log("AddPhoto");
+					addPhoto(response["logs"]);
+				}
+				else if(processHex(response["logs"][0]["data")=="DeletePhoto"){
+					console.log("DeletePhoto");
+					deletePhot(response["logs"]);
+				}
+			}
+			else if(response["logs"].length==3){
+				if(processHex(response["logs"][0]["data"])=="AddPeer"){
+					console.log("AddPeer");
+					addPeer(response["logs"]);
+				}
+			}
+		}
+	})
+}
+
+function getDataFromBlock(blockIndex){
+	web3.eth.getBlockTransactionCount(blockIndex,(error,response)=>{
+		var numOfTransaction=JSON.parse(response);
+		for(var index=0;index<numOfTransaction;index++){
+			web3.eth.getTransactionFromBlock(blockIndex,index,(error,response)=>{
+				if(!error){
+					computeOnTransaction(response["hash"]);
+				}
+			})
+		}
+	})
+}
+
+function checkForTransactions(){
+	console.log(lastBlockNumber);
+	web3.eth.getBlockNumber((error,response)=>{
+		var blockIndex=JSON.parse(response);
+		var goFromBlock=lastBlockNumber;
+		lastBlockNumber=blockIndex;
+		for(var index=goFromBlock;index<blockIndex;index++){
+			getDataFromBlock(index);
 		}
 	});
-});
-
-// web3.eth.filter({address:_addressList,'topics':[web3.sha3('functionStatus(string)')]}).watch(function(error,response){
-// 	if(!error){
-// 		console.log(response);
-// //		string args[]=parseHexToString(response.data,',');
-// //		correctHashOfTheBlock(args[0],args[1]);
-// 	}
-// })
+}
+setInterval(checkForTransactions,5000);
