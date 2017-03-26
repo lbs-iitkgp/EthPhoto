@@ -138,7 +138,8 @@ function readDataFromFile(fileName){
 	})
 }
 
-
+//To use this function include a callback function after
+//setting a suitable timer.
 function searchforTagWithRange(tag,startIndex,endIndex){
 	return new Promise((resolve,reject)=>{
 		(function loopingOverFiles(index){
@@ -221,15 +222,15 @@ function sleep (time){
 	})
 }
 
-sleep(500).then(()=>{
-	searchforTagWithRange("tree",0,2)
-		.then(()=>{
-			console.log("result");
-			sleep(200).then(()=>{
-				console.log(_result);
-			})
-		})
-});
+// sleep(500).then(()=>{
+// 	searchforTagWithRange("tree",0,2)
+// 		.then(()=>{
+// 			console.log("result");
+// 			sleep(200).then(()=>{
+// 				console.log(_result);
+// 			})
+// 		})
+// });
 
 // Test Function calls.
 addPhoto("tree","123","123","123");
