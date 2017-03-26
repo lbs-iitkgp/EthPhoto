@@ -17,10 +17,10 @@ contract userAccount {
 		addressLogger("PHOTO_UPLOAD_END");
 	}
 
-//	function accountDelete() {
-//		if (isHolder()) {
-//			suicide(_accountHolder);
-//		}
-//	}
-
+	function deletePhoto(string photoHash,string tag) payable {
+		addressLogger("PHOTO_DELETE_START");
+		addressLogger(photoHash);
+		addressLogger(tag);
+		addressLogger("PHOTO_DELETE_END");
+	}
 }
