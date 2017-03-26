@@ -1,7 +1,7 @@
 const fs=require('fs')
 const geth=require('geth')
 const web3=require('web3')
-const IPFS=require('ipfs')
+const IPFS=require('ipfs-api')
 const concat = require('concat-stream')
 
 const ipfs = new IPFS({init:'true',start:'true'})
@@ -32,15 +32,15 @@ geth.start(options, (err, proc) => {
 	}
 });
 
-ipfs.on('start', ()=> {
-	console.log("IPFS daemon started");
+//ipfs.on('start', ()=> {
+//	console.log("IPFS daemon started");
 
-	ipfsPeers.forEach((addr) => {addIPFSPeer(addr)});
+//	ipfsPeers.forEach((addr) => {addIPFSPeer(addr)});
 
 
-	addFile({path:'temp1.png'});
+	addFile('/home/kalyan/opsrc/opensoft2017/EthPhoto/temp1.png');
 	getIPFSFile('QmPEK1DntiVoCpZrtT4sn2bjvFXAqvQciSbY8rvjbNhi8N')
-});
+//});
 
 function addIPFSPeer(addr) {
 	ipfs.swarm.connect(addr, (err) => {
@@ -74,7 +74,7 @@ function sendTransaction(){
 }
 
 function addFile(data){
-	ipfs.files.add(data, (err,res) => {
+	ipfs.util.addFromFs(data, (err,res) => {
 		if(err){
 			console.log("Error while adding file " + file);
 			throw err;

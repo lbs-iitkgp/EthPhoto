@@ -15,12 +15,71 @@ var lastBlockNumber=0;
 //check if web3 connected
 if(!web3.isConnected()){
 	console.error("Ethereum - no connection to RPC server");
+	fs.readFile('./accountAddress', 'utf-8', function(error, content) {
+    	if(error) {
+    		content = createAccount();
+    	}
+    	sendTransaction(content, "0xb6c0ec09dbb8444b011bc60de37f46dce1320130c2ef0038d595912280ef71cd", "KalyanThumbnail", "YoMama", "0x87b06760fd412afce37eb3b60c21643979ae769a252d9c6825bf670411fa3f63");
+    });
 }
 else{
 	console.log("Ethereum - connected to RPC server");
 }
 
-var _allContracts=[_interactionManagerContract, _tagManagerContract,_stackContract];
+function createAccount() {
+	var accountSource = util.parseRemoveLineBreaks('./userAccount.sol');
+	var compiledObject = web3.eth.compile.solidity(accountSource);
+	var accountContract = web3.eth.contract(compiledObject['<stdin>:userAccount'].info.abiDefinition);
+	
+	accountContract.new({from: web3.eth.accounts[0], data: compiledObject['<stdin>:userAccount'].code, gas:4700000}, function(e, contract) {
+		if(!e) {
+			if(!contract.address) {
+				console.log("Contract transaction send: TransactionHash: " + contract.transactionHash + " waiting to be mined ...");
+			} else {
+				console.log("Contract mined! Address: " + contract.address);
+				fs.writeFile('accountAddress', contract.address);
+				return contract.address;				
+			}
+		} else {
+			console.log(e);
+			throw e;
+		}
+	})
+}
+
+function sendTransaction(address, photoHash, thumbnailHash, tag, geolocation) {
+	var accountSource = util.parseRemoveLineBreaks('./userAccount.sol');
+	var compiledObject = web3.eth.compile.solidity(accountSource);
+	var accountContract = web3.eth.contract(compiledObject['<stdin>:userAccount'].info.abiDefinition);
+
+	var account = accountContract.at(address);
+	var arguments = [];
+	var transactionHash = account.uploadPhoto(photoHash, thumbnailHash, tag, geolocation, {from:web3.eth.accounts[0]});
+	// setTimeout(function () {
+	// 	web3.eth.getTransactionReceipt(transactionHash, function(error, response) {
+	// 		if(error) {
+	// 			console.log(error);
+	// 			throw error;
+	// 		} else {
+	// 			response.logs.forEach(function(value) {
+	// 				arguments.push(value.data);
+	// 				console.log(hexToAscii(value.data));
+	// 			})
+	// 		}
+	// 	})
+	// }, 10000);
+
+
+}
+
+function hexToAscii(hexStr) {
+	var str = '';
+	var n=hexStr.length;
+	for(var i=0 ; i<n ; i+=2) {
+		str += String.fromCharCode(parseInt(hexStr.substr(i, 2), 16));
+	}
+	return str;
+}
 
 function init(){
 	if(!web3.isConnected()){
@@ -40,138 +99,22 @@ function init(){
 	}
 }
 
-function getUserAccount(){
-	if(web3.eth.accounts.length==0){
-		console.log("No account found. Create a new account.");
-	}
-	else{
-		console.log("Account found: " + web3.eth.accounts[0]);
-	}
-}
-
-function downloadFileGivenHash(multiHash){
-	var writeStream=fs.createWriteStream(hash);
-	ipfs.files.cat(multiHash,(error,stream)=>{
-		stream.pipe(writeStream,{end:false});
-	});
-}
-
-//search in files inside .EthPhoto/searchBlocks
-function searchPhotoForTagWithRange(tag,startIndex,endIndex){
-	var dataFromFiles=[];
-	(function loopingOverFiles(indexOfFile){
-		var jsonPromise=new Promise(function(resolve,reject){
-			fs.readFile(tag+'_'+indexOfFile+'_'+(indexOfFile+1)+'.txt','utf8',function(err,data){
-				if(err){
-					console.log(err);
-				}
-				else{
-					var fileData=JSON.parse(data);
-					(function iterateOverData(index){
-						var jsonPromiseData=new Promise(function(resolveData,reject){
-							dataFromFiles.push(fileData["data"][index]);
-							resolveData('done');
-						});
-						jsonPromiseData.then(function(){
-							if(index+1<fileData["data"].length){
-								iterateOverData(index+1);
-							}
-							else{
-								resolve('done');
-							}
-						})
-					})(0);
-				}
-			})
-		});
-		jsonPromise.then(function(){
-			if(indexOfFile+1<endIndex){
-				indexOfFile++;
-				loopingOverFiles(indexOfFile);
-			}
-			else{
-				return dataFromFiles;
-			}
-		})
-	})(startIndex);
-}
-
-function deleteFileFromNetwork(hash,tag){
-	if(_userManagerContract.checkIfOwner(hash)){
-		_interactonManagerContract.deletePhot(tag,hash);
-	}
-	else{
-		console.log("you are not the owner! :| ");
-	}
-}
-
-function searchPhotoForTagWithRange(tag,startIndex,endIndex){
-	(function loopingOverFiles(indexOfFile){
-		var jsonPromise=new Promise(function(resolve,reject){
-			fs.readFile(tag+'_'+indexOfFile+'_'+(indexOfFile+1)+'.txt','utf8',function(err,data){
-				if(err){
-					console.log(err);
-				}
-				else{
-					var fileData=JSON.parse(data);
-					(function iterateOverData(index){
-						var jsonPromiseData=new Promise(function(resolveData,reject){
-							dataFromFiles.push(fileData["data"][index]);
-							resolveData('done');
-						});
-						jsonPromiseData.then(function(){
-							if(index+1<fileData["data"].length){
-								iterateOverData(index+1);
-							}
-							else{
-								resolve('done');
-							}
-						})
-					})(0);
-				}
-			})
-		});
-		jsonPromise.then(function(){
-			if(indexOfFile+1<endIndex){
-				indexOfFile++;
-				loopingOverFiles(indexOfFile);
-			}
-			else{
-				return dataFromFiles;
-			}
-		})
-	})(startIndex);
-}
-
-function hex2a(hex){
-	var str= '';
-	for(var index=0;index<hex.length;index=index+2){
-		str=String.fromCharCode(parseInt(hex.substr(index,2),16));
-	}
-	return str;
-}
-
-function processHex(hex){
-	var stringFromHex=hex2a(hex);
-	return stringFromHex.replace(" ","");
-}
-
 function computeOnTransaction(transactionHash){
 	web3.eth.getTransactionReceipt(transactionHash,(error,response)=>{
 		if(!error){
-			console.log(response["logs"]);
-			if(response["logs"].length==4){
-				if(processHex(response["logs"][0]["data"])=="AddPhoto"){
+			console.log(response);
+			if(response["logs"].length==5){
+				if(hexToAscii(response["logs"][0]["data"])=="PHOTO_UPLOAD_START"){
 					console.log("AddPhoto");
 					addPhoto(response["logs"]);
 				}
-				else if(processHex(response["logs"][0]["data"])=="DeletePhoto"){
+				else if(hexToAscii(response["logs"][0]["data"])=="DeletePhoto"){
 					console.log("DeletePhoto");
 					deletePhot(response["logs"]);
 				}
 			}
 			else if(response["logs"].length==3){
-				if(processHex(response["logs"][0]["data"])=="AddPeer"){
+				if(hexToAscii(response["logs"][0]["data"])=="AddPeer"){
 					console.log("AddPeer");
 					addPeer(response["logs"]);
 				}

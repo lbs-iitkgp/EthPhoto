@@ -6,7 +6,7 @@
 	"fs" : "0.0.1-security",
     "geth" : "0.3.0",
 	"web3" : "0.13.0",
-	"ipfs" : "0.23.0"
+	"ipfs-api" : "13.0.0"
   },
   "main": "backendTest.js",
   "scripts": {
