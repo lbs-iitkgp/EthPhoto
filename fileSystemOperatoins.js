@@ -121,6 +121,48 @@ function addPhoto(tag,hash,thumbNailHash,geoLocation){
 	});
 }
 
+var _result=[];
+
+function readDataFromFile(fileName){
+	return new Promise((resolve,reject)=>{
+		fs.readFile(fileName,'utf8',(error,json)=>{
+			var config=[];
+			try{
+				config=JSON.parse(json);
+			}catch(e){
+				throw e;
+			}
+			_result.push(config);
+			resolve();
+		})
+	})
+}
+
+
+function searchforTagWithRange(tag,startIndex,endIndex){
+	return new Promise((resolve,reject)=>{
+		(function loopingOverFiles(index){
+			var jsonPromise=new Promise((resolveThis,reject)=>{
+				var fileName=tag+"_"+index.toString()+"_"+(index+1).toString()+".txt";
+				console.log(fileName);
+				mutexForFile[fileName].synchronize(()=>{
+					return readDataFromFile(fileName);
+				});
+				index++;
+				resolveThis();
+			});
+			jsonPromise.then(()=>{
+				if(index<parseInt(endIndex)){
+					loopingOverFiles(index);
+				}
+				else if(index==parseInt(endIndex)){
+					resolve();
+				}
+			});
+		})(parseInt(startIndex));
+	})
+}
+
 function deleteFromFileNameAfterLock(fileName,hash){
 	console.log(fileName+"__"+hash);
 	return new Promise((resolve,response)=>{
@@ -173,10 +215,44 @@ function deletePhoto(tag,hash){
 	})
 }
 
+function sleep (time){
+	return new Promise((resolve)=>{
+		setTimeout(resolve,time);
+	})
+}
+
+sleep(500).then(()=>{
+	searchforTagWithRange("tree",0,2)
+		.then(()=>{
+			console.log("result");
+			sleep(200).then(()=>{
+				console.log(_result);
+			})
+		})
+});
+
+// Test Function calls.
 addPhoto("tree","123","123","123");
 addPhoto("tree","34345","234346","324346");
 addPhoto("fooder","34","2342435","3246");
 addPhoto("fooder","545","675767","213123");
 addPhoto("tree","34","456457","6578");
+addPhoto("tree","34","456457","6578");
+addPhoto("tree","34","456457","6578");
+addPhoto("tree","34","456457","6578");
+addPhoto("tree","34","456457","6578");
+addPhoto("tree","34","456457","6578");
+addPhoto("tree","34","456457","6578");
+addPhoto("tree","34","456457","6578");
+addPhoto("tree","34","456457","6578");
+addPhoto("tree","34","456457","6578");
+addPhoto("tree","34","456457","6578");
+addPhoto("tree","34","456457","6578");
+addPhoto("tree","34","456457","6578");
+addPhoto("tree","34","456457","6578");
+addPhoto("tree","34","456457","6578");
+addPhoto("tree","34","456457","6578");
+addPhoto("tree","34","456457","6578");
+addPhoto("tree","34","456457","6578");
+addPhoto("tree","546","56456","68678");
 //put a sleep if delete dosent work.
-deletePhoto("tree","34345");
