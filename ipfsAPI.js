@@ -9,7 +9,8 @@ const ipfsDataPath='/home/kalyan/.EthPhoto/image-data/';
 var ipfsPeers = [];
 var ipfs = ipfsAPI(ipfsHost, ipfsAPIPort)
 
-ipfsGet('QmXMSzMXC6pTqqDFBZWpgBUZaW3bQ8gYzrjdyv2wkfvSLs');
+// ipfsGet('QmXMSzMXC6pTqqDFBZWpgBUZaW3bQ8gYzrjdyv2wkfvSLs');
+ipfsAdd("./temp1.png",false);
 
 function addIPFSPeer(addr) {
 	ipfs.swarm.connect(addr, (err) => {
@@ -50,10 +51,6 @@ function ipfsAdd(path, recursive) {
 	});
 }
 
-function deleteFile(){
-	//TODO
-}
-
 function ipfsGet(multihash) {
 	mkdirp.sync(ipfsDataPath);
 	ipfs.files.get(multihash, (err, stream) => {
@@ -76,3 +73,13 @@ function ipfsGet(multihash) {
 		}
 	})
 }
+
+function getIPFSImageData(multihash){
+	ipfs.files.cat(multihash,(error,stream)=>{
+		var writeStream=fs.createWriteStream('./data/'+multihash+'.png');
+		stream.pipe(writeStream,{end:false});
+		console.log('done');
+	});
+}
+
+getIPFSImageData("QmPEK1DntiVoCpZrtT4sn2bjvFXAqvQciSbY8rvjbNhi8N");

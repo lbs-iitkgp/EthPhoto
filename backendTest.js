@@ -4,7 +4,7 @@ const web3=require('web3')
 const ipfsApi=require('ipfs-api')
 const concat = require('concat-stream')
 const util=require('./util.js')
-const gm=require('gm').subClass({imageMagick:true})
+const lwip=require('lwip')
 // const fileSystem=require('./fileSystemOperations.js')
 
 var ipfsHost='localhost';
@@ -80,27 +80,40 @@ function viewPhoto(thumbnailHash){
 var _thumbnailHash;
 function getImageThumbnailHash(path){
 	return new Promise((resolve,reject)=>{
-		gm(path).thumb(500,500,"thumbNailForNow.png",100,()=>{
-			ipfs.util.addFromFs("./"+path,(error,response)=>{
-				if(error){
-					console.log("Error while adding thumbnail : "+error);
-				}
-				else{
-					_thumbnailHash=response[0]["hash"];
-					resolve();
-				}
-			})
+		// gm(path).thumb(500,500,"thumbNailForNow.png",100,()=>{
+		// 	ipfs.util.addFromFs("./"+path,(error,response)=>{
+		// 		if(error){
+		// 			console.log("Error while adding thumbnail : "+error);
+		// 		}
+		// 		else{
+		// 			_thumbnailHash=response[0]["hash"];
+		// 			resolve();
+		// 		}
+		// 	})
+		// })
+		lwip.open('path',(error,image)=>{
+			image.batch()
+				.scale(0.3)
+				.writeFile('./thumbNail.png',(err)=>{
+					ipfs.util.addFromFs("./thumbNail.png",(err,res)=>{
+						if(err){
+							console.log("Error while adding thumbNail");
+						}
+						else{
+							_thumbnailHash=res[0]["hash"];
+							resolve();
+						}
+					})
+				})
 		})
 	});
 }
 
 function getIPFSImageData(multihash){
-	new Promise((resolve,reject)=>{
-		ipfs.files.cat(multihash,(error,stream)=>{
-			var writeStream=fs.createWriteStream('./data/'+multihash+'.png');
-			stream.pipe(writeStream,{end:false});
-			console.log('done');
-		});
+	ipfs.files.cat(multihash,(error,stream)=>{
+		var writeStream=fs.createWriteStream('./data/'+multihash+'.png');
+		stream.pipe(writeStream,{end:false});
+		console.log('done');
 	});
 }
 
@@ -132,6 +145,7 @@ function addFileToIPFSAndSendTransaction(path,tag,geolocation){
 			else{
 				getImageThumbnailHash(path)
 					.then(()=>{
+						thumbnailHashToImageHash[_thumbnailHash]=response[0]["hash"];
 						sendTransactionToAdd(address,response[0]["hash"],_thumbnailHash,tag,geolocation);
 						resolve();
 					})
@@ -251,7 +265,7 @@ function addPhoto(tag,hash,thumbNailHash,geoLocation){
 		}
 		else{
 			countImagesForTag[tag]=0;
-			getIPFSImageData(hash,thumbnailHash);
+			ipfsAddToDisk(hash,thumbnailHash);
 			mutexForCountImagesTag[tag]=new Mutex();
 			resolve();
 		}
@@ -282,19 +296,22 @@ function readDataFromFile(fileName){
 
 //To use this function include a callback function after
 //setting a suitable timer.
-function searchforTagWithRange(tag,startIndex,endIndex){
+//NEED TO TEST THIS!
+function searchForTagWithRange(tag,startIndex,endIndex){
+	_result=[]
 	return new Promise((resolve,reject)=>{
 		(function loopingOverFiles(index){
 			var jsonPromise=new Promise((resolveThis,reject)=>{
 				var fileName=tag+"_"+index.toString()+"_"+(index+1).toString()+".txt";
 				console.log(fileName);
+				index++;
 				mutexForFile[fileName].synchronize(()=>{
 					return readDataFromFile(fileName);
 				});
-				index++;
 				resolveThis();
 			});
 			jsonPromise.then(()=>{
+				console.log("now here");
 				if(index<parseInt(endIndex)){
 					loopingOverFiles(index);
 				}
@@ -307,7 +324,7 @@ function searchforTagWithRange(tag,startIndex,endIndex){
 }
 
 function deleteFromFileNameAfterLock(fileName,hash){
-	console.log(fileName+"__"+hash);
+	// console.log(fileName+"__"+hash);
 	return new Promise((resolve,response)=>{
 		fs.readFile(fileName,'utf8',function(error,json){
 			config=JSON.parse(json);
@@ -325,7 +342,7 @@ function deleteFromFileNameAfterLock(fileName,hash){
 						loopingOverData(index);
 					}
 					else if(index==config["data"].length){
-						console.log("here");
+						// console.log("here");
 						fs.writeFile(fileName,JSON.stringify(configNew),'utf8',function(error){
 							console.log(configNew);
 							resolve();
@@ -525,3 +542,16 @@ setInterval(checkForTransactions,3000);
 //=========================================
 //==== backEndProcess related code END ====
 //=========================================
+
+
+//=======================
+//======TEST CODE========
+//=======================
+
+sleep(5000).then(()=>{
+	searchForTagWithRange("tree",0,1)
+		.then(()=>{
+			console.log("RESULTS");
+			console.log(_result);
+		});
+});
