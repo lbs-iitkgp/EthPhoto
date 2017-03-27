@@ -16,6 +16,20 @@ web3.setProvider(new web3.providers.HttpProvider(web3Host + ':' + web3Port));
 var ipfs=ipfsApi(ipfsHost,ipfsAPIPort);
 var lastBlockNumber=0;
 
+//============================
+//========VARIABLES===========
+//============================
+var mutexForFile={};
+var mutexForCountImagesTag={};
+var countImagesForTag={};
+var indexOfHashInTagFile={};
+var getUserCountForHash={};
+var getUserImages={};
+var thumbnailHashToImageHash={};
+//===========================
+//======END OF VARIABLES=====
+//===========================
+
 //check if web3 connected
 // if(!web3.isConnected()){
 // 	console.error("Ethereum - no connection to RPC server");
@@ -34,31 +48,26 @@ var lastBlockNumber=0;
 //===========================
 //==== API to call BEGIN ====
 //===========================
-function uploadPhoto(path){
-	var jsonPromise = new Promise((resolve,reject)=>{
-		gm(path).thumb(500,500,"thumbNailForNow.png",100,()=>{
-			ipfs.
+function uploadPhotoFromDisk(path,tag,geolocation){
+	addFileToIPFSAndSendTransaction(path,tag,geoLocation)
+		.then(()=>{
+			console.log("Completed adding image and thumbnail.");
 		})
-	});
-	jsonPromise.then(()=>{
-		console.log('done');
-	})
 }
 
-function deletePhotoFromDisk(path){
-	//qwe
+function deletePhotoFromDisk(path,tag){
+	deleteFileFromIPFSSendTransaction(path,tag)
+		.then(()=>{
+			console.log("Completed deleting image.")
+		})
 }
 
-function viewPhoto(tag){
-	//qwe
-}
-
-function exchangeHashForImage(hash){
-	//qwe
-}
-
-function queryForTagRange(tag,startIndex,endIndex){
-	//qwe
+function viewPhoto(thumbnailHash){
+	var imageHash=thumbnailHashToImageHash[thumbnailHash];
+	getIPFSImageData(imageHash)
+		.then(()=>{
+			console.log("Got image.");
+		})
 }
 //=========================
 //==== API to call END ====
@@ -68,14 +77,30 @@ function queryForTagRange(tag,startIndex,endIndex){
 //=============================
 //==== start of IPFS CODE =====
 //=============================
-//
+var _thumbnailHash;
+function getImageThumbnailHash(path){
+	return new Promise((resolve,reject)=>{
+		gm(path).thumb(500,500,"thumbNailForNow.png",100,()=>{
+			ipfs.util.addFromFs("./"+path,(error,response)=>{
+				if(error){
+					console.log("Error while adding thumbnail : "+error);
+				}
+				else{
+					_thumbnailHash=response[0]["hash"];
+					resolve();
+				}
+			})
+		})
+	});
+}
+
 function getIPFSImageData(multihash){
-	var writeStream=fs.createWriteStream('./data/'+multihashStr+'.png');
-	writeStream.on('open',()=>{
-		ipfs.files.cat(multihashStr,(error,stream)=>{
+	new Promise((resolve,reject)=>{
+		ipfs.files.cat(multihash,(error,stream)=>{
+			var writeStream=fs.createWriteStream('./data/'+multihash+'.png');
 			stream.pipe(writeStream,{end:false});
 			console.log('done');
-			});
+		});
 	});
 }
 
@@ -84,9 +109,35 @@ function ipfsAddToDisk(hash,thumbnailHash){
 	getIPFSImageData(thumbnailHash);
 }
 
-//TODO
-function addFileToIPFS(path){
-	ipfs.files.
+function deletedFileFromIPFSSendTransaction(path,tag){
+	return new Promise((resolve,reject)=>{
+		ipfs.util.addFromFs(path,(error,response)=>{
+			if(error){
+				console.log("File already deleted.");
+			}
+			else{
+				sendTransactionToDelete(address,response[0]["hash"],tag);
+				resolve();
+			}
+		})
+	})
+}
+
+function addFileToIPFSAndSendTransaction(path,tag,geolocation){
+	return new Promise((resolve,reject)=>{
+		ipfs.util.addFromFs(path,(error,response)=>{
+			if(error){
+				console.log("Error while adding file.");
+			}
+			else{
+				getImageThumbnailHash(path)
+					.then(()=>{
+						sendTransactionToAdd(address,response[0]["hash"],_thumbnailHash,tag,geolocation);
+						resolve();
+					})
+			}
+		})
+	})
 }
 //==========================
 //==== end of IPFS CODE ====
@@ -127,13 +178,6 @@ Mutex.prototype._execute=function(task){
 		self._dequeue();
 	});
 };
-
-var mutexForFile={};
-var mutexForCountImagesTag={};
-var countImagesForTag={};
-var indexOfHashInTagFile={};
-var getUserCountForHash={};
-var getUserImages={};
 
 function Photo(hash,thumbNailHash,tag,geoLocation){
 	this.hash=hash;
