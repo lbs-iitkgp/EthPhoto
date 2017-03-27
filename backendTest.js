@@ -1,8 +1,10 @@
+// ONLY SUPPORT FOR .png FILES FOR NOW.
 const fs=require('fs')
 const web3=require('web3')
 const ipfsApi=require('ipfs-api')
 const concat = require('concat-stream')
 const util=require('./util.js')
+const gm=require('gm').subClass({imageMagick:true})
 // const fileSystem=require('./fileSystemOperations.js')
 
 var ipfsHost='localhost';
@@ -29,8 +31,71 @@ var lastBlockNumber=0;
 // }
 // 
 
-//start of fileSystem CODE
+//===========================
+//==== API to call BEGIN ====
+//===========================
+function uploadPhoto(path){
+	var jsonPromise = new Promise((resolve,reject)=>{
+		gm(path).thumb(500,500,"thumbNailForNow.png",100,()=>{
+			ipfs.
+		})
+	});
+	jsonPromise.then(()=>{
+		console.log('done');
+	})
+}
 
+function deletePhotoFromDisk(path){
+	//qwe
+}
+
+function viewPhoto(tag){
+	//qwe
+}
+
+function exchangeHashForImage(hash){
+	//qwe
+}
+
+function queryForTagRange(tag,startIndex,endIndex){
+	//qwe
+}
+//=========================
+//==== API to call END ====
+//=========================
+
+
+//=============================
+//==== start of IPFS CODE =====
+//=============================
+//
+function getIPFSImageData(multihash){
+	var writeStream=fs.createWriteStream('./data/'+multihashStr+'.png');
+	writeStream.on('open',()=>{
+		ipfs.files.cat(multihashStr,(error,stream)=>{
+			stream.pipe(writeStream,{end:false});
+			console.log('done');
+			});
+	});
+}
+
+function ipfsAddToDisk(hash,thumbnailHash){
+	getIPFSImageData(hash);
+	getIPFSImageData(thumbnailHash);
+}
+
+//TODO
+function addFileToIPFS(path){
+	ipfs.files.
+}
+//==========================
+//==== end of IPFS CODE ====
+//==========================
+
+
+//==================================
+//=====start of fileSystem CODE=====
+//==================================
 var Mutex=function(){
 	this._busy=false;
 	this._queue=[];
@@ -68,6 +133,7 @@ var mutexForCountImagesTag={};
 var countImagesForTag={};
 var indexOfHashInTagFile={};
 var getUserCountForHash={};
+var getUserImages={};
 
 function Photo(hash,thumbNailHash,tag,geoLocation){
 	this.hash=hash;
@@ -141,6 +207,7 @@ function addPhoto(tag,hash,thumbNailHash,geoLocation){
 		}
 		else{
 			countImagesForTag[tag]=0;
+			getIPFSImageData(hash,thumbnailHash);
 			mutexForCountImagesTag[tag]=new Mutex();
 			resolve();
 		}
@@ -243,6 +310,12 @@ function deletePhotoFromFile(tag,hash){
 
 function deletePhoto(tag,hash){
 	mutexForCountImagesTag[tag].synchronize(function(){
+		fs.existsSync('./data/'+tag+'.png',(exists)=>{
+			if(exists){
+				console.log(gutil.colors.green('File exists.'));
+				fs.unlink('./data/'+tag+'.png');
+			}
+		})
 		return deletePhotoFromFile(tag,hash);
 	})
 }
@@ -252,9 +325,14 @@ function sleep (time){
 		setTimeout(resolve,time);
 	})
 }
+//================================
+//=====END OF fileSystem CODE=====
+//================================
 
-//END OF fileSystem CODE
 
+//===========================================
+//===== backEndProcess related code BEGIN====
+//===========================================
 function createAccount() {
 	var accountSource = util.parseRemoveLineBreaks('./userAccount.sol');
 	var compiledObject = web3.eth.compile.solidity(accountSource);
@@ -275,8 +353,6 @@ function createAccount() {
 		}
 	})
 }
-
-// createAccount();
 
 function sendTransactionToAdd(address, photoHash, thumbnailHash, tag, geolocation) {
 	var accountSource = util.parseRemoveLineBreaks('./userAccount.sol');
@@ -402,3 +478,6 @@ function checkForTransactions(){
 	});
 }
 setInterval(checkForTransactions,3000);
+//=========================================
+//==== backEndProcess related code END ====
+//=========================================
