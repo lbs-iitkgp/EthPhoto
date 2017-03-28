@@ -26,25 +26,25 @@ var indexOfHashInTagFile={};
 var getUserCountForHash={};
 var getUserImages={};
 var thumbnailHashToImageHash={};
-var address="0xebf14bd5091919de42636d231440f58db139e4d6";
+var address="0x9df5e4da52b59c79a9e36d5ace57c327b8271316";
 //===========================
 //======END OF VARIABLES=====
 //===========================
 
 //check if web3 connected
-if(!web3.isConnected()){
-	console.error("Ethereum - no connection to RPC server");
-	fs.readFile('./accountAddress', 'utf-8', function(error, content) {
-    	if(error) {
-    		content = createAccount();
-    		address=content;
-    	}
-    	sendTransaction(content, "0xb6c0ec09dbb8444b011bc60de37f46dce1320130c2ef0038d595912280ef71cd", "KalyanThumbnail", "YoMama", "0x87b06760fd412afce37eb3b60c21643979ae769a252d9c6825bf670411fa3f63");
-    });
-}
-else{
-	console.log("Ethereum - connected to RPC server");
-}
+// if(!web3.isConnected()){
+// 	console.error("Ethereum - no connection to RPC server");
+// 	fs.readFile('./accountAddress', 'utf-8', function(error, content) {
+//     	if(error) {
+//     		content = createAccount();
+//     		address=content;
+//     	}
+//     	sendTransaction(content, "0xb6c0ec09dbb8444b011bc60de37f46dce1320130c2ef0038d595912280ef71cd", "KalyanThumbnail", "YoMama", "0x87b06760fd412afce37eb3b60c21643979ae769a252d9c6825bf670411fa3f63");
+//     });
+// }
+// else{
+// 	console.log("Ethereum - connected to RPC server");
+// }
 
 
 //===========================
@@ -369,15 +369,26 @@ function deletePhotoFromFile(tag,hash){
 }
 
 function deletePhoto(tag,hash){
+	console.log("DELETING_PHOTO_BEGIN",tag,hash);
 	mutexForCountImagesTag[tag].synchronize(function(){
-		fs.existsSync('./data/'+tag+'.png',(exists)=>{
+		console.log("DELETING: " + hash);
+		fs.exists('./data/'+hash+'.png',(exists)=>{
 			if(exists){
-				console.log(gutil.colors.green('File exists.'));
-				fs.unlink('./data/'+tag+'.png');
+				console.log('File exists.');
+				try{
+					fs.unlink('./data/'+ hash +'.png');
+				}
+				catch(e){
+					console.log(e);
+				}
+			}
+			else{
+				console.log("FILE DOSENT EXISTS");
 			}
 		})
 		return deletePhotoFromFile(tag,hash);
 	})
+	console.log("DELETING_PHOTO_END");
 }
 
 function sleep (time){
@@ -425,12 +436,12 @@ function sendTransactionToAdd(address, photoHash, thumbnailHash, tag, geolocatio
 }
 
 function sendTransactionToDelete(address, photoHash, tag) {
-	var accountSource = util.parseRemoveLineBreaks('/userAccount.sol');
+	var accountSource = util.parseRemoveLineBreaks('./userAccount.sol');
 	var compiledObject = web3.eth.compile.solidity(accountSource);
 	var accountContract = web3.eth.contract(compiledObject['<stdin>:userAccount'].info.abiDefinition);
 
 	var account = accountContract.at(address);
-	var transactionHash = account.deletePhoto(tag, photoHash, {from:web3.eth.accounts[0]});
+	var transactionHash = account.deletePhoto(photoHash, tag, {from:web3.eth.accounts[0]});
 }
 
 function hexToAscii(hexStr) {
@@ -480,11 +491,11 @@ function computeOnTransaction(transactionHash){
 						var geolocation=hexToAscii(response["logs"][4]["data"]);
 						addPhoto(tag,hash,thumbnailHash,geolocation);
 					}
-					else if(functionArgumet=="PHOTO_DELETE_START"){
-						var hash=hexToAscii(response["logs"][1]["data"]);
-						var tag=hexToAscii(response["logs"][2]["data"]);
-						deletePhoto(tag,hash);
-					}
+				}
+				else if(response["logs"].length==4){
+					var hash=hexToAscii(response["logs"][1]["data"]);
+					var tag=hexToAscii(response["logs"][2]["data"]);
+					deletePhoto(tag,hash);
 				}
 				else if(response["logs"].length==3){
 					if(functionArgumet.indexOf("AddPeer")!=-1){
@@ -548,4 +559,23 @@ setInterval(checkForTransactions,3000);
 //=======================
 
 // createAccount();
-uploadPhotoFromDisk("/home/sandeep/github/EthPhoto/test.png","anime","LBS");
+// uploadPhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/test.png","anime","home");
+// uploadPhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/wallhaven-903.png","anime","home");
+// uploadPhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/wallhaven-16746.png","anime","home");
+// uploadPhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/wallhaven-203329.png","anime","home");
+// uploadPhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/wallhaven-239129.jpg","anime","home");
+// uploadPhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/wallhaven-285982.jpg","anime","home");
+// uploadPhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/wallhaven-373257.jpg","anime","home");
+// searchForTagWithRange("anime",0,2)
+// 	,then(()=>{
+// 		console.log(_result);
+// 	})
+// sleep(10000).then(()=>{
+// 	deletePhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/wallhaven-903.png","anime");
+// })
+sleep(10000).then(()=>{
+	searchForTagWithRange("anime",0,1)
+		.then(()=>{
+			console.log(_result);
+		})
+})
