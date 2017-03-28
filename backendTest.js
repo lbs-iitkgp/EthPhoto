@@ -26,29 +26,31 @@ var indexOfHashInTagFile={};
 var getUserCountForHash={};
 var getUserImages={};
 var thumbnailHashToImageHash={};
+var address="0xebf14bd5091919de42636d231440f58db139e4d6";
 //===========================
 //======END OF VARIABLES=====
 //===========================
 
 //check if web3 connected
-// if(!web3.isConnected()){
-// 	console.error("Ethereum - no connection to RPC server");
-// 	fs.readFile('./accountAddress', 'utf-8', function(error, content) {
-//     	if(error) {
-//     		content = createAccount();
-//     	}
-//     	sendTransaction(content, "0xb6c0ec09dbb8444b011bc60de37f46dce1320130c2ef0038d595912280ef71cd", "KalyanThumbnail", "YoMama", "0x87b06760fd412afce37eb3b60c21643979ae769a252d9c6825bf670411fa3f63");
-//     });
-// }
-// else{
-// 	console.log("Ethereum - connected to RPC server");
-// }
-// 
+if(!web3.isConnected()){
+	console.error("Ethereum - no connection to RPC server");
+	fs.readFile('./accountAddress', 'utf-8', function(error, content) {
+    	if(error) {
+    		content = createAccount();
+    		address=content;
+    	}
+    	sendTransaction(content, "0xb6c0ec09dbb8444b011bc60de37f46dce1320130c2ef0038d595912280ef71cd", "KalyanThumbnail", "YoMama", "0x87b06760fd412afce37eb3b60c21643979ae769a252d9c6825bf670411fa3f63");
+    });
+}
+else{
+	console.log("Ethereum - connected to RPC server");
+}
+
 
 //===========================
 //==== API to call BEGIN ====
 //===========================
-function uploadPhotoFromDisk(path,tag,geolocation){
+function uploadPhotoFromDisk(path,tag,geoLocation){
 	addFileToIPFSAndSendTransaction(path,tag,geoLocation)
 		.then(()=>{
 			console.log("Completed adding image and thumbnail.");
@@ -80,18 +82,7 @@ function viewPhoto(thumbnailHash){
 var _thumbnailHash;
 function getImageThumbnailHash(path){
 	return new Promise((resolve,reject)=>{
-		// gm(path).thumb(500,500,"thumbNailForNow.png",100,()=>{
-		// 	ipfs.util.addFromFs("./"+path,(error,response)=>{
-		// 		if(error){
-		// 			console.log("Error while adding thumbnail : "+error);
-		// 		}
-		// 		else{
-		// 			_thumbnailHash=response[0]["hash"];
-		// 			resolve();
-		// 		}
-		// 	})
-		// })
-		lwip.open('path',(error,image)=>{
+		lwip.open(path,(error,image)=>{
 			image.batch()
 				.scale(0.3)
 				.writeFile('./thumbNail.png',(err)=>{
@@ -118,11 +109,13 @@ function getIPFSImageData(multihash){
 }
 
 function ipfsAddToDisk(hash,thumbnailHash){
+	console.log("ipfsAddToDisk_BEGIN");
 	getIPFSImageData(hash);
 	getIPFSImageData(thumbnailHash);
+	console.log("ipfsAddToDisk_END");
 }
 
-function deletedFileFromIPFSSendTransaction(path,tag){
+function deleteFileFromIPFSSendTransaction(path,tag){
 	return new Promise((resolve,reject)=>{
 		ipfs.util.addFromFs(path,(error,response)=>{
 			if(error){
@@ -143,8 +136,10 @@ function addFileToIPFSAndSendTransaction(path,tag,geolocation){
 				console.log("Error while adding file.");
 			}
 			else{
+				console.log("added file to IPFS");
 				getImageThumbnailHash(path)
 					.then(()=>{
+						console.log("thumbnailHash is: " + _thumbnailHash);
 						thumbnailHashToImageHash[_thumbnailHash]=response[0]["hash"];
 						sendTransactionToAdd(address,response[0]["hash"],_thumbnailHash,tag,geolocation);
 						resolve();
@@ -258,14 +253,17 @@ function incrementTag(tag,currPhoto){
 }
 
 function addPhoto(tag,hash,thumbNailHash,geoLocation){
+	console.log("addPhoto_BEGIN");
+	console.log(tag,hash,thumbNailHash,geoLocation);
 	var currPhoto=new Photo(hash,thumbNailHash,tag,geoLocation);
 	var jsonPromise=new Promise(function(resolve,reject){
+		// console.log("JSON_PROMISE",hash,thumbNailHash);
+		ipfsAddToDisk(hash,thumbNailHash);
 		if(tag in countImagesForTag){
 			resolve();
 		}
 		else{
 			countImagesForTag[tag]=0;
-			ipfsAddToDisk(hash,thumbnailHash);
 			mutexForCountImagesTag[tag]=new Mutex();
 			resolve();
 		}
@@ -275,6 +273,7 @@ function addPhoto(tag,hash,thumbNailHash,geoLocation){
 			return incrementTag(tag,currPhoto);
 		})
 	});
+	console.log("addPhoto_END");
 }
 
 var _result=[];
@@ -416,13 +415,13 @@ function createAccount() {
 }
 
 function sendTransactionToAdd(address, photoHash, thumbnailHash, tag, geolocation) {
+	console.log("_sendTransactionToAdd_BEGING");
 	var accountSource = util.parseRemoveLineBreaks('./userAccount.sol');
 	var compiledObject = web3.eth.compile.solidity(accountSource);
 	var accountContract = web3.eth.contract(compiledObject['<stdin>:userAccount'].info.abiDefinition);
-	sleep(0).then(()=>{
-		var account = accountContract.at(address);
-		var transactionHash = account.uploadPhoto(photoHash, thumbnailHash, tag, geolocation, {from:web3.eth.accounts[0]});
-	})
+	var account = accountContract.at(address);
+	var transactionHash = account.uploadPhoto(photoHash, thumbnailHash, tag, geolocation, {from:web3.eth.accounts[0]});
+	console.log("_sendTransactionToAdd_FINISH "+transactionHash);
 }
 
 function sendTransactionToDelete(address, photoHash, tag) {
@@ -465,10 +464,10 @@ function init(){
 }
 
 function computeOnTransaction(transactionHash){
+	console.log("computeOnTransaction_BEGIN");
 	web3.eth.getTransactionReceipt(transactionHash,(error,response)=>{
 		if(!error){
 			if(response["logs"].length>0){
-				console.log("here");
 				var functionArgumet=hexToAscii(response["logs"][0]["data"]).toString();
 				console.log(functionArgumet.length);
 				console.log(functionArgumet=="PHOTO_UPLOAD_START");
@@ -548,10 +547,5 @@ setInterval(checkForTransactions,3000);
 //======TEST CODE========
 //=======================
 
-sleep(5000).then(()=>{
-	searchForTagWithRange("tree",0,1)
-		.then(()=>{
-			console.log("RESULTS");
-			console.log(_result);
-		});
-});
+// createAccount();
+uploadPhotoFromDisk("/home/sandeep/github/EthPhoto/test.png","anime","LBS");
