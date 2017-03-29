@@ -26,7 +26,7 @@ var indexOfHashInTagFile={};
 var getUserCountForHash={};
 var getUserImages={};
 var thumbnailHashToImageHash={};
-var address="0x9df5e4da52b59c79a9e36d5ace57c327b8271316";
+var address="0x17bf0775f967ea8278bb4ff53d7de683deeeb1b1";
 //===========================
 //======END OF VARIABLES=====
 //===========================
@@ -295,7 +295,7 @@ function readDataFromFile(fileName){
 
 //To use this function include a callback function after
 //setting a suitable timer.
-//NEED TO TEST THIS!
+//NEED TO UNDERSTAND THIS!
 function searchForTagWithRange(tag,startIndex,endIndex){
 	_result=[]
 	return new Promise((resolve,reject)=>{
@@ -305,9 +305,11 @@ function searchForTagWithRange(tag,startIndex,endIndex){
 				console.log(fileName);
 				index++;
 				mutexForFile[fileName].synchronize(()=>{
-					return readDataFromFile(fileName);
+					return readDataFromFile(fileName)
+						.then(()=>{
+							resolveThis();
+						})
 				});
-				resolveThis();
 			});
 			jsonPromise.then(()=>{
 				console.log("now here");
@@ -439,7 +441,6 @@ function sendTransactionToDelete(address, photoHash, tag) {
 	var accountSource = util.parseRemoveLineBreaks('./userAccount.sol');
 	var compiledObject = web3.eth.compile.solidity(accountSource);
 	var accountContract = web3.eth.contract(compiledObject['<stdin>:userAccount'].info.abiDefinition);
-
 	var account = accountContract.at(address);
 	var transactionHash = account.deletePhoto(photoHash, tag, {from:web3.eth.accounts[0]});
 }
@@ -483,7 +484,7 @@ function computeOnTransaction(transactionHash){
 				console.log(functionArgumet.length);
 				console.log(functionArgumet=="PHOTO_UPLOAD_START");
 				if(response["logs"].length==6){
-					console.log("one of these");
+					// console.log("one of these");
 					if(functionArgumet=="PHOTO_UPLOAD_START"){
 						var hash=hexToAscii(response["logs"][1]["data"]);
 						var thumbnailHash=hexToAscii(response["logs"][2]["data"]);
@@ -493,6 +494,7 @@ function computeOnTransaction(transactionHash){
 					}
 				}
 				else if(response["logs"].length==4){
+					// console.log("PHOTO_DELETE_START");
 					var hash=hexToAscii(response["logs"][1]["data"]);
 					var tag=hexToAscii(response["logs"][2]["data"]);
 					deletePhoto(tag,hash);
@@ -504,6 +506,9 @@ function computeOnTransaction(transactionHash){
 					}
 				}
 			}
+		}
+		else{
+			console.log(error);
 		}
 	})
 }
@@ -559,6 +564,9 @@ setInterval(checkForTransactions,3000);
 //=======================
 
 // createAccount();
+// sleep(1000).then(()=>{
+// 	uploadPhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/23048_5_centimeters_per_second.jpg","anime","home");
+// })
 // uploadPhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/test.png","anime","home");
 // uploadPhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/wallhaven-903.png","anime","home");
 // uploadPhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/wallhaven-16746.png","anime","home");
@@ -570,12 +578,12 @@ setInterval(checkForTransactions,3000);
 // 	,then(()=>{
 // 		console.log(_result);
 // 	})
-// sleep(10000).then(()=>{
-// 	deletePhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/wallhaven-903.png","anime");
+// sleep(2000).then(()=>{
+// 	deletePhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/23048_5_centimeters_per_second.jpg","anime");
 // })
-sleep(10000).then(()=>{
-	searchForTagWithRange("anime",0,1)
-		.then(()=>{
-			console.log(_result);
-		})
-})
+// sleep(10000).then(()=>{
+// 	searchForTagWithRange("anime",0,1)
+// 		.then(()=>{
+// 			console.log(_result);
+// 		})
+// })
