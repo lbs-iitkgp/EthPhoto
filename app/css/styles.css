@@ -1,0 +1,192 @@
+/******* Main CSS *******/
+
+
+/* Optional: Makes the sample page fill the window. */
+
+html,
+body {
+    height: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+body {
+    font-family: -apple-system, 'Helvetica Neue', Helvetica, sans-serif;
+}
+
+header {
+    position: absolute;
+    width: 500px;
+    height: 250px;
+    top: 50%;
+    left: 50%;
+    margin-top: -125px;
+    margin-left: -250px;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 60px;
+    font-weight: 100;
+    margin: 0;
+    padding: 0;
+}
+
+.nopadding {
+    padding: 6px !important;
+    margin: 0 !important;
+}
+
+
+/* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+
+#map {
+    height: 100vh;
+    width: 100vw;
+    left: 0;
+    top: 0;
+    position: absolute;
+}
+
+.blur {
+    -webkit-animation: blurIn 2s linear forwards;
+    -moz-animation: blurIn 2s linear forwards;
+    -ms-animation: blurIn 2s linear forwards;
+    -o-animation: blurIn 2s linear forwards;
+    animation: blurIn 2s linear forwards;
+}
+
+.removeBlur {
+    -webkit-animation: blurOut 2s linear forwards;
+    -moz-animation: blurOut 2s linear forwards;
+    -ms-animation: blurOut 2s linear forwards;
+    -o-animation: blurOut 2s linear forwards;
+    animation: blurOut 2s linear forwards;
+}
+
+.firstBlur {
+    -webkit-animation: none;
+    -moz-animation: none;
+    -ms-animation: none;
+    -o-animation: none;
+    animation: none;
+}
+
+@-webkit-keyframes blurIn {
+    0% {
+        -webkit-filter: blur(0px);
+    }
+    50% {
+        -webkit-filter: blur(6px);
+    }
+    100% {
+        -webkit-filter: blur(10px);
+    }
+}
+
+@-moz-keyframes blurIn {
+    0% {
+        -moz-filter: blur(0px);
+    }
+    50% {
+        -moz-filter: blur(6px);
+    }
+    100% {
+        -moz-filter: blur(10px);
+    }
+}
+
+@-o-keyframes blurIn {
+    0% {
+        -o-filter: blur(0px);
+    }
+    50% {
+        -o-filter: blur(6px);
+    }
+    100% {
+        -o-filter: blur(10px);
+    }
+}
+
+@keyframes blurIn {
+    0% {
+        filter: blur(0px);
+    }
+    50% {
+        filter: blur(6px);
+    }
+    100% {
+        filter: blur(10px);
+    }
+}
+
+@-webkit-keyframes blurOut {
+    0% {
+        -webkit-filter: blur(10px);
+    }
+    50% {
+        -webkit-filter: blur(3px);
+    }
+    100% {
+        -webkit-filter: blur(0px);
+    }
+}
+
+@-moz-keyframes blurOut {
+    0% {
+        -moz-filter: blur(10px);
+    }
+    50% {
+        -moz-filter: blur(3px);
+    }
+    100% {
+        -moz-filter: blur(0px);
+    }
+}
+
+@-o-keyframes blurOut {
+    0% {
+        -o-filter: blur(10px);
+    }
+    50% {
+        -o-filter: blur(3px);
+    }
+    100% {
+        -o-filter: blur(0px);
+    }
+}
+
+@keyframes blurOut {
+    0% {
+        filter: blur(10px);
+    }
+    50% {
+        filter: blur(3px);
+    }
+    100% {
+        filter: blur(0px);
+    }
+}
+
+#container {
+    position: relative;
+}
+
+#addButton {
+    border-radius: 44px;
+    height: 54px;
+    margin-top: 15px;
+    width: 100%;
+}
+
+#allButton {
+    border-radius: 44px;
+    height: 54px;
+    margin-top: 15px;
+    width: 100%;
+}
+
+#jumboCards {
+    background: white !important;
+}

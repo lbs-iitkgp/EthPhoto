@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html ng-app="ethphoto">
+
+<head>
+    <title>EthPhoto</title>
+    <meta name="viewport" content="initial-scale=1.0">
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/search.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.1/angular.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.1/angular-route.js"></script>
+    <script type="text/javascript" src="js/core.js"></script>
+    <script type="text/javascript" src="js/controllers/mainController.js"></script>
+    <script type="text/javascript" src="js/directives/slide.js"></script>
+</head>
+
+<body>
+    <div class="container-fluid" ng-controller="mainController">
+        <div id="mainView">
+            <div id="map" class="firstBlur" ng-class='{"blur":addToggle, "removeBlur":!addToggle}'></div>
+            <div class="row">
+                <div class="col-md-1 nopadding">
+                </div>
+                <div class="col-md-9 nopadding">
+                    <form action="" class="search-form">
+                        <div class="form-group has-feedback">
+                            <label for="search" class="sr-only">Search</label>
+                            <input type="text" class="form-control" name="search" id="search" placeholder="Search for tags">
+                            <span class="glyphicon glyphicon-search form-control-feedback"></span>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-md-1 nopadding">
+                    <button id="addButton" class="btn btn-default" type="button" slide-toggle="#addView" ng-click="toggleAdd()">
+                        Add photo
+                    </button>
+                </div>
+                <div class="col-md-1 nopadding">
+                    <button id="allButton" class="btn btn-default" type="button" slide-toggle="#allView" ng-click="toggleAll()">
+                        My photos
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="addView" class="slideable" duration="0.7s">
+            <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <div id="jumboCards" class="jumbotron">
+                        <h1>Heading</h1>
+                        <p>Paragraph</p>
+                        <p><a class="btn btn-primary">Button</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="allView" class="slideable" duration="0.7s">
+            <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <div id="jumboCards" class="jumbotron">
+                        <h1>Heading</h1>
+                        <p>Paragraph</p>
+                        <p><a class="btn btn-primary">Button</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    window.jQuery = window.$ = require('jquery');
+    </script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script src="js/maps.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyALqC-VVUPT9lTMZgXp71M-fXTgwFXt-88&callback=initMap" async defer></script>
+</body>
+
+</html>
