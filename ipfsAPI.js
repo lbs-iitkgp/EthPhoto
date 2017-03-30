@@ -1,85 +1,72 @@
-const fs=require('fs')
-const mkdirp=require('mkdirp')
-const ipfsAPI=require('ipfs-api')
+const lwip=require('lwip')
 
-const ipfsHost='localhost';
-const ipfsAPIPort='5001';
-const ipfsWebPort='8080';
-const ipfsDataPath='/home/kalyan/.EthPhoto/image-data/';
-var ipfsPeers = [];
-var ipfs = ipfsAPI(ipfsHost, ipfsAPIPort)
-
-// ipfsGet('QmXMSzMXC6pTqqDFBZWpgBUZaW3bQ8gYzrjdyv2wkfvSLs');
-ipfsAdd("./temp1.png",false);
-
-function addIPFSPeer(addr) {
-	ipfs.swarm.connect(addr, (err) => {
-		if(err) {
-			console.log("Unable to add peer " + addr);
-			throw err;
-		}
-		console.log("Added peer " + addr);
+var _thumbnailHash;
+function getImageThumbnailHash(path){
+	return new Promise((resolve,reject)=>{
+		lwip.open(path,(error,image)=>{
+			image.batch()
+				.scale(0.3)
+				.writeFile('./thumbNail.png',(err)=>{
+					ipfs.util.addFromFs("./thumbNail.png",(err,res)=>{
+						if(err){
+							console.log("Error while adding thumbNail");
+						}
+						else{
+							_thumbnailHash=res[0]["hash"];
+							resolve();
+						}
+					})
+				})
+		})
 	});
-}
-
-function listPeers(){
-	ipfs.swarm.peers(function(err,peerInfos){
-		if(err){
-			console.log("Error while listing peers");
-			throw err;
-		} else {
-			console.log(peerInfos);
-		}
-	})
-}
-
-function ipfsAdd(path, recursive) {
-	options = {};
-	if(recursive) {
-		options.recursive = recursive;
-	}
-
-	options.hidden = false;
-	ipfs.util.addFromFs(path, options, (err,res) => {
-		if(err){
-			console.log("Error while adding path " + path + ": ", err);
-			throw err;
-		} else {
-			console.log(res);
-			return res;
-		}
-	});
-}
-
-function ipfsGet(multihash) {
-	mkdirp.sync(ipfsDataPath);
-	ipfs.files.get(multihash, (err, stream) => {
-		if(err) {
-			console.log("Error while getting file over IPFS");
-			throw err;
-		}
-		else {
-			stream.on('data', (file) => {
-				if(typeof(file.content) != 'undefined')
-					file.content.pipe(fs.createWriteStream(ipfsDataPath + file.path));
-				else {
-					if(!fs.existsSync(ipfsDataPath + file.path))
-						mkdirp.sync(ipfsDataPath + file.path);
-				}
-			})
-			stream.on('error', (err) => {
-				console.log('Error while getting file',err);
-			})
-		}
-	})
 }
 
 function getIPFSImageData(multihash){
 	ipfs.files.cat(multihash,(error,stream)=>{
-		var writeStream=fs.createWriteStream('./data/'+multihash+'.png');
+		var writeStream=fs.createWriteStream(imageDataDir + multihash + '.png');
 		stream.pipe(writeStream,{end:false});
 		console.log('done');
 	});
 }
 
-getIPFSImageData("QmPEK1DntiVoCpZrtT4sn2bjvFXAqvQciSbY8rvjbNhi8N");
+function ipfsAddToDisk(hash,thumbnailHash){
+	console.log("ipfsAddToDisk_BEGIN");
+	getIPFSImageData(hash);
+	getIPFSImageData(thumbnailHash);
+	console.log("ipfsAddToDisk_END");
+}
+
+function deleteFileFromIPFSSendTransaction(path,tag){
+	return new Promise((resolve,reject)=>{
+		ipfs.util.addFromFs(path,(error,response)=>{
+			if(error){
+				console.log("File already deleted.");
+			}
+			else{
+				sendTransactionToDelete(address,response[0]["hash"],tag);
+				resolve();
+			}
+		})
+	})
+}
+
+function addFileToIPFSAndSendTransaction(path,tag,geolocation){
+	return new Promise((resolve,reject)=>{
+		ipfs.util.addFromFs(path,(error,response)=>{
+			if(error){
+				console.log(path, error);
+				console.log("Error while adding file.");
+			}
+			else{
+				console.log("Added file to IPFS");
+				getImageThumbnailHash(path)
+					.then(()=>{
+						console.log("thumbnailHash is: " + _thumbnailHash);
+						thumbnailHashToImageHash[_thumbnailHash]=response[0]["hash"];
+						sendTransactionToAdd(address,response[0]["hash"],_thumbnailHash,tag,geolocation);
+						resolve();
+					})
+			}
+		})
+	})
+}

@@ -1,4 +1,5 @@
 // ONLY SUPPORT FOR .png FILES FOR NOW.
+const express=require('express')
 const fs=require('fs')
 const web3=require('web3')
 const ipfsApi=require('ipfs-api')
@@ -6,7 +7,7 @@ const concat = require('concat-stream')
 const util=require('./util.js')
 const mkdirp=require('mkdirp')
 const lwip=require('lwip')
-// const fileSystem=require('./fileSystemOperations.js')
+app = express();
 
 const appDataDir=process.env.HOME+'/.EthPhoto/'
 const imageDataDir=appDataDir+'img-store/'
@@ -57,27 +58,27 @@ if(web3.isConnected()) {
 //===========================
 //==== API to call BEGIN ====
 //===========================
-function uploadPhotoFromDisk(path,tag,geoLocation){
+app.post('/uploadPhoto', function uploadPhotoFromDisk(path,tag,geoLocation){
 	addFileToIPFSAndSendTransaction(path,tag,geoLocation)
 		.then(()=>{
 			console.log("Completed adding image and thumbnail.");
 		})
-}
+});
 
-function deletePhotoFromDisk(path,tag){
+app.post('/deletePhoto', function deletePhotoFromDisk(path,tag){
 	deleteFileFromIPFSSendTransaction(path,tag)
 		.then(()=>{
 			console.log("Completed deleting image.")
 		})
-}
+});
 
-function viewPhoto(thumbnailHash){
+app.post('/viewPhoto', function viewPhoto(thumbnailHash){
 	var imageHash=thumbnailHashToImageHash[thumbnailHash];
 	getIPFSImageData(imageHash)
 		.then(()=>{
 			console.log("Got image.");
 		})
-}
+});
 //=========================
 //==== API to call END ====
 //=========================
