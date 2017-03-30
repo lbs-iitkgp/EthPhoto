@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="css/search.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.1/angular.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.1/angular-route.js"></script>
+    <script src="/upload_module/ng-file-upload-shim.min.js"></script>
+    <script src="/upload_module/ng-file-upload-all.min.js"></script>
     <script type="text/javascript" src="js/controllers/mainController.js"></script>
     <script type="text/javascript" src="js/directives/slide.js"></script>
     <script type="text/javascript" src="js/core.js"></script>
@@ -47,9 +49,19 @@
             <div class="row">
                 <div class="col-md-10 col-md-offset-1">
                     <div id="jumboCards" class="jumbotron">
-                        <h1>Heading</h1>
-                        <p>Paragraph</p>
-                        <p><a class="btn btn-primary">Button</a></p>
+                        <div class="row">
+                            <div class="col-xs-10 col-xs-offset-1 align-middle" align="center">
+                                <h4>Upload file here</h4>
+                                <div ng-show="!file" type="file" name="file" ngf-drop ngf-select ng-model="file" class="drop-box" ngf-drag-over-class="'dragover'" ngf-allow-dir="true" accept="image/*" ngf-pattern="'image/*'">Drop image here or click to upload</div>
+                                <img ng-show="file" type="file" name="file" class="drop-box-full img-responsive" ngf-drop ngf-select ng-model="file" ngf-drag-over-class="'dragover'" ngf-allow-dir="true" accept="image/*" ngf-pattern="'image/*'" ngf-src="file" ngf-resize="{centerCrop: true}">
+                                <div style="font:smaller; padding-left: 1vw; padding-right: 1vw; padding-top: 1vw;">{{errFile.name}} {{errFile.$error}} {{errFile.$errorParam}}
+                                    <span class="progress" ng-show="f.progress >= 0 && f.progress < 100">
+                                            <progress class="progress progress-striped progress-animated" value="{{f.progress}}" max="100">Uploaded: {{f.progress}}%</progress>
+                                    </span>
+                                </div>
+                                <p>{{errorMsg}}</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

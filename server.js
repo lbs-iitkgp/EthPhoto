@@ -2,7 +2,7 @@
     // set up ======================================================================
     var express = require('express');
     var app = express(); // create our app w/ express
-    var port = process.env.PORT || 8080; // set the port
+    var port = process.env.PORT || 5000; // set the port
     var morgan = require('morgan');
     var bodyParser = require('body-parser');
     var methodOverride = require('method-override');
@@ -17,10 +17,11 @@
     app.use(methodOverride('X-HTTP-Method-Override')); // override with the X-HTTP-Method-Override header in the request
 
     // redirections
+    console.log(__dirname);
+    app.use('/my_images', express.static(__dirname + '/my_images/'));
+    app.use('/upload_module', express.static(__dirname + '/node_modules/ng-file-upload/dist/'));
     // app.use('/scripts', express.static(__dirname + '/scripts/'));
-    // app.use('/imge_dump', express.static(__dirname + '/image_dump/'));
     // app.use('/secrets', express.static(__dirname + '/app/secrets/'));
-    // app.use('/upload_module', express.static(__dirname + '/node_modules/ng-file-upload/dist/'));
     // app.use('/slider_module', express.static(__dirname + '/node_modules/angularjs-slider/dist/'));
 
     // routes ======================================================================
