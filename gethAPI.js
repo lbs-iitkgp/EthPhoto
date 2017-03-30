@@ -1,19 +1,25 @@
 // ONLY SUPPORT FOR .png FILES FOR NOW.
+const express=require('express')
 const fs=require('fs')
 const web3=require('web3')
 const ipfsApi=require('ipfs-api')
 const concat = require('concat-stream')
 const util=require('./util.js')
+const mkdirp=require('mkdirp')
 const lwip=require('lwip')
-// const fileSystem=require('./fileSystemOperations.js')
+app = express();
+
+const appDataDir=process.env.HOME+'/.EthPhoto/'
+const imageDataDir=appDataDir+'img-store/'
+const fileDataDir=appDataDir+'file-store/'
+var web3Host='http://localhost';
+var web3Port='8545';
 
 var ipfsHost='localhost';
 var ipfsAPIPort='5001';
 var ipfsWebPort='8080';
-var web3Host='http://localhost';
-var web3Port='8545';
-web3.setProvider(new web3.providers.HttpProvider(web3Host + ':' + web3Port));
 var ipfs=ipfsApi(ipfsHost,ipfsAPIPort);
+
 var lastBlockNumber=0;
 
 //============================
@@ -26,51 +32,52 @@ var indexOfHashInTagFile={};
 var getUserCountForHash={};
 var getUserImages={};
 var thumbnailHashToImageHash={};
-var address="0x17bf0775f967ea8278bb4ff53d7de683deeeb1b1";
+var address="";
 //===========================
 //======END OF VARIABLES=====
 //===========================
 
-//check if web3 connected
-// if(!web3.isConnected()){
-// 	console.error("Ethereum - no connection to RPC server");
-// 	fs.readFile('./accountAddress', 'utf-8', function(error, content) {
-//     	if(error) {
-//     		content = createAccount();
-//     		address=content;
-//     	}
-//     	sendTransaction(content, "0xb6c0ec09dbb8444b011bc60de37f46dce1320130c2ef0038d595912280ef71cd", "KalyanThumbnail", "YoMama", "0x87b06760fd412afce37eb3b60c21643979ae769a252d9c6825bf670411fa3f63");
-//     });
-// }
-// else{
-// 	console.log("Ethereum - connected to RPC server");
-// }
+web3.setProvider(new web3.providers.HttpProvider(web3Host + ':' + web3Port));
 
+if(web3.isConnected()) {
+	console.log("Ethereum - connected to RPC server");
+ 	fs.readFile(appDataDir + 'accountAddress', 'utf-8', function(error, content) {
+		if(error)
+     		content = createAccount();
+     	address = content;
+     });
+ 	if(!fs.existsSync(imageDataDir))
+ 		mkdirp.sync(imageDataDir);
+ 	if(!fs.existsSync(fileDataDir))
+ 		mkdirp.sync(fileDataDir);
+} else {
+ 	console.error("Ethereum - no connection to RPC server from 47");
+}
 
 //===========================
 //==== API to call BEGIN ====
 //===========================
-function uploadPhotoFromDisk(path,tag,geoLocation){
+app.post('/uploadPhoto', function uploadPhotoFromDisk(path,tag,geoLocation){
 	addFileToIPFSAndSendTransaction(path,tag,geoLocation)
 		.then(()=>{
 			console.log("Completed adding image and thumbnail.");
 		})
-}
+});
 
-function deletePhotoFromDisk(path,tag){
+app.post('/deletePhoto', function deletePhotoFromDisk(path,tag){
 	deleteFileFromIPFSSendTransaction(path,tag)
 		.then(()=>{
 			console.log("Completed deleting image.")
 		})
-}
+});
 
-function viewPhoto(thumbnailHash){
+app.post('/viewPhoto', function viewPhoto(thumbnailHash){
 	var imageHash=thumbnailHashToImageHash[thumbnailHash];
 	getIPFSImageData(imageHash)
 		.then(()=>{
 			console.log("Got image.");
 		})
-}
+});
 //=========================
 //==== API to call END ====
 //=========================
@@ -102,7 +109,7 @@ function getImageThumbnailHash(path){
 
 function getIPFSImageData(multihash){
 	ipfs.files.cat(multihash,(error,stream)=>{
-		var writeStream=fs.createWriteStream('./data/'+multihash+'.png');
+		var writeStream=fs.createWriteStream(imageDataDir + multihash + '.png');
 		stream.pipe(writeStream,{end:false});
 		console.log('done');
 	});
@@ -133,10 +140,11 @@ function addFileToIPFSAndSendTransaction(path,tag,geolocation){
 	return new Promise((resolve,reject)=>{
 		ipfs.util.addFromFs(path,(error,response)=>{
 			if(error){
+				console.log(path, error);
 				console.log("Error while adding file.");
 			}
 			else{
-				console.log("added file to IPFS");
+				console.log("Added file to IPFS");
 				getImageThumbnailHash(path)
 					.then(()=>{
 						console.log("thumbnailHash is: " + _thumbnailHash);
@@ -223,7 +231,7 @@ function editFile(fileName,photo){
 
 function addPhotoToFile(indexOfFile,currPhoto){
 	var indexOfFileInInt=parseInt(parseInt(indexOfFile)/10);
-	var fileName=currPhoto.tag+"_"+indexOfFileInInt.toString()+"_"+(indexOfFileInInt+1).toString()+".txt";
+	var fileName=fileDataDir + currPhoto.tag + "_" + indexOfFileInInt.toString() + "_" + (indexOfFileInInt+1).toString() + ".txt";
 	var jsonPromise=new Promise(function(resolve,reject){
 		if(fileName in mutexForFile){
 			resolve();
@@ -364,7 +372,7 @@ function deleteFromFileName(fileName,hash){
 function deletePhotoFromFile(tag,hash){
 	return new Promise((resolve,response)=>{
 		var indexOfHash=parseInt(parseInt(indexOfHashInTagFile[hash])/10);
-		var fileName=tag+"_"+indexOfHash.toString()+"_"+(indexOfHash+1).toString()+".txt";
+		var fileName=fileDataDir + tag + "_" + indexOfHash.toString() + "_" + (indexOfHash+1).toString()+".txt";
 		deleteFromFileName(fileName,hash);
 		resolve();
 	})
@@ -374,11 +382,11 @@ function deletePhoto(tag,hash){
 	console.log("DELETING_PHOTO_BEGIN",tag,hash);
 	mutexForCountImagesTag[tag].synchronize(function(){
 		console.log("DELETING: " + hash);
-		fs.exists('./data/'+hash+'.png',(exists)=>{
+		fs.exists(imageDataDir + hash + '.png',(exists)=>{
 			if(exists){
 				console.log('File exists.');
 				try{
-					fs.unlink('./data/'+ hash +'.png');
+					fs.unlink(imageDataDir + hash + '.png');
 				}
 				catch(e){
 					console.log(e);
@@ -417,7 +425,7 @@ function createAccount() {
 				console.log("Contract transaction send: TransactionHash: " + contract.transactionHash + " waiting to be mined ...");
 			} else {
 				console.log("Contract mined! Address: " + contract.address);
-				fs.writeFile('accountAddress', contract.address);
+				fs.writeFile(appDataDir + 'accountAddress', contract.address);
 				return contract.address;				
 			}
 		} else {
@@ -562,28 +570,3 @@ setInterval(checkForTransactions,3000);
 //=======================
 //======TEST CODE========
 //=======================
-
-// createAccount();
-// sleep(1000).then(()=>{
-// 	uploadPhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/23048_5_centimeters_per_second.jpg","anime","home");
-// })
-// uploadPhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/test.png","anime","home");
-// uploadPhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/wallhaven-903.png","anime","home");
-// uploadPhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/wallhaven-16746.png","anime","home");
-// uploadPhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/wallhaven-203329.png","anime","home");
-// uploadPhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/wallhaven-239129.jpg","anime","home");
-// uploadPhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/wallhaven-285982.jpg","anime","home");
-// uploadPhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/wallhaven-373257.jpg","anime","home");
-// searchForTagWithRange("anime",0,2)
-// 	,then(()=>{
-// 		console.log(_result);
-// 	})
-// sleep(2000).then(()=>{
-// 	deletePhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/23048_5_centimeters_per_second.jpg","anime");
-// })
-// sleep(10000).then(()=>{
-// 	searchForTagWithRange("anime",0,1)
-// 		.then(()=>{
-// 			console.log(_result);
-// 		})
-// })
