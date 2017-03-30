@@ -1,12 +1,13 @@
 // ONLY SUPPORT FOR .png FILES FOR NOW.
+const express=require('express')
 const fs=require('fs')
 const web3=require('web3')
 const ipfsApi=require('ipfs-api')
 const concat = require('concat-stream')
-const util=require('./util.js')
+const util=require('./utilAPI.js')
 const mkdirp=require('mkdirp')
 const lwip=require('lwip')
-// const fileSystem=require('./fileSystemOperations.js')
+app = express();
 
 const appDataDir=process.env.HOME+'/.EthPhoto/'
 const imageDataDir=appDataDir+'img-store/'
@@ -18,6 +19,8 @@ var ipfsHost='localhost';
 var ipfsAPIPort='5001';
 var ipfsWebPort='8080';
 var ipfs=ipfsApi(ipfsHost,ipfsAPIPort);
+
+var appPort = 6969;
 
 var lastBlockNumber=0;
 
@@ -57,27 +60,27 @@ if(web3.isConnected()) {
 //===========================
 //==== API to call BEGIN ====
 //===========================
-function uploadPhotoFromDisk(path,tag,geoLocation){
+app.post('/uploadPhoto', function uploadPhotoFromDisk(path,tag,geoLocation){
 	addFileToIPFSAndSendTransaction(path,tag,geoLocation)
 		.then(()=>{
 			console.log("Completed adding image and thumbnail.");
 		})
-}
+});
 
-function deletePhotoFromDisk(path,tag){
+app.post('/deletePhoto', function deletePhotoFromDisk(path,tag){
 	deleteFileFromIPFSSendTransaction(path,tag)
 		.then(()=>{
 			console.log("Completed deleting image.")
 		})
-}
+});
 
-function viewPhoto(thumbnailHash){
+app.post('/viewPhoto', function viewPhoto(thumbnailHash){
 	var imageHash=thumbnailHashToImageHash[thumbnailHash];
 	getIPFSImageData(imageHash)
 		.then(()=>{
 			console.log("Got image.");
 		})
-}
+});
 //=========================
 //==== API to call END ====
 //=========================
@@ -109,6 +112,10 @@ function getImageThumbnailHash(path){
 
 function getIPFSImageData(multihash){
 	ipfs.files.cat(multihash,(error,stream)=>{
+		if(error) {
+			console.log("Error while getting " + multihash, error);
+			throw error;
+		}
 		var writeStream=fs.createWriteStream(imageDataDir + multihash + '.png');
 		stream.pipe(writeStream,{end:false});
 		console.log('done');
@@ -566,32 +573,15 @@ setInterval(checkForTransactions,3000);
 //==== backEndProcess related code END ====
 //=========================================
 
+var server = app.listen(appPort, function(){
+	var host = server.address().address
+ 	var port = server.address().port
+  	console.log("EthPhoto listening at http://%s:%s", host, port)
+});               
+
+// expose app           
+exports = module.exports = app;
 
 //=======================
 //======TEST CODE========
 //=======================
-
-// createAccount();
-// sleep(1000).then(()=>{
-// 	uploadPhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/23048_5_centimeters_per_second.jpg","anime","home");
-// })
-// uploadPhotoFromDisk("/home/kalyan/opsrc/opensoft2017/EthPhoto/test.png","anime","home");
-// uploadPhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/wallhaven-903.png","anime","home");
-// uploadPhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/wallhaven-16746.png","anime","home");
-// uploadPhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/wallhaven-203329.png","anime","home");
-// uploadPhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/wallhaven-239129.jpg","anime","home");
-// uploadPhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/wallhaven-285982.jpg","anime","home");
-// uploadPhotoFromDisk("/home/sandeep/github/EthPhoto/testImages/wallhaven-373257.jpg","anime","home");
-// searchForTagWithRange("anime",0,2)
-// 	,then(()=>{
-// 		console.log(_result);
-// 	})
-sleep(2000).then(()=>{
- 	deletePhotoFromDisk("/home/kalyan/opsrc/opensoft2017/EthPhoto/test.png","anime");
-})
-// sleep(10000).then(()=>{
-// 	searchForTagWithRange("anime",0,1)
-// 		.then(()=>{
-// 			console.log(_result);
-// 		})
-// })
