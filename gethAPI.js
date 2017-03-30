@@ -4,7 +4,7 @@ const fs=require('fs')
 const web3=require('web3')
 const ipfsApi=require('ipfs-api')
 const concat = require('concat-stream')
-const util=require('./util.js')
+const util=require('./utilAPI.js')
 const mkdirp=require('mkdirp')
 const lwip=require('lwip')
 app = express();
@@ -19,6 +19,8 @@ var ipfsHost='localhost';
 var ipfsAPIPort='5001';
 var ipfsWebPort='8080';
 var ipfs=ipfsApi(ipfsHost,ipfsAPIPort);
+
+var appPort = 6969;
 
 var lastBlockNumber=0;
 
@@ -109,6 +111,10 @@ function getImageThumbnailHash(path){
 
 function getIPFSImageData(multihash){
 	ipfs.files.cat(multihash,(error,stream)=>{
+		if(error) {
+			console.log("Error while getting " + multihash, error);
+			throw error;
+		}
 		var writeStream=fs.createWriteStream(imageDataDir + multihash + '.png');
 		stream.pipe(writeStream,{end:false});
 		console.log('done');
@@ -566,7 +572,14 @@ setInterval(checkForTransactions,3000);
 //==== backEndProcess related code END ====
 //=========================================
 
+var server = app.listen(appPort, function(){
+	var host = server.address().address
+ 	var port = server.address().port
+  	console.log("EthPhoto listening at http://%s:%s", host, port)
+});               
+
+// expose app           
+exports = module.exports = app;
 
 //=======================
 //======TEST CODE========
-//=======================

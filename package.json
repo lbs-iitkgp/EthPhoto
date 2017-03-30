@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "description": "Blockchian-based photo-sharing app.",
   "dependencies": {
-	"fs" : "0.0.1-security",
+	"express" : "~4.13.4",
+  "fs" : "0.0.1-security",
 	"mkdirp" : "0.5.1",
-    "geth" : "0.3.0",
+  "geth" : "0.3.0",
 	"web3" : "0.13.0",
 	"ipfs-api" : "13.0.0"
   },
