@@ -10,15 +10,15 @@
     <link rel="stylesheet" href="css/search.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.1/angular.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.1/angular-route.js"></script>
-    <script type="text/javascript" src="js/core.js"></script>
     <script type="text/javascript" src="js/controllers/mainController.js"></script>
     <script type="text/javascript" src="js/directives/slide.js"></script>
+    <script type="text/javascript" src="js/core.js"></script>
 </head>
 
 <body>
     <div class="container-fluid" ng-controller="mainController">
         <div id="mainView">
-            <div id="map" class="firstBlur" ng-class='{"blur":addToggle, "removeBlur":!addToggle}'></div>
+            <div id="map" class="firstBlur" ng-class='{"blur":addToggle||allToggle, "removeBlur":!addToggle&&!allToggle}'></div>
             <div class="row">
                 <div class="col-md-1 nopadding">
                 </div>
@@ -67,10 +67,16 @@
         </div>
     </div>
     <script>
-    window.jQuery = window.$ = require('jquery');
+    if (typeof module === 'object') {
+        window.module = module;
+        module = undefined;
+    }
+    </script>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+    <script>
+    if (window.module) module = window.module;
     </script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-    <script src="js/maps.js"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyALqC-VVUPT9lTMZgXp71M-fXTgwFXt-88&callback=initMap" async defer></script>
 </body>
 
