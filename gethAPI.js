@@ -444,7 +444,7 @@ function createAccount() {
 	var compiledObject = web3.eth.compile.solidity(accountSource);
 	var accountContract = web3.eth.contract(compiledObject['<stdin>:userAccount'].info.abiDefinition);
 	
-	accountContract.new({from: web3.eth.accounts[0], data: compiledObject['<stdin>:userAccount'].code, gas:47000000}, function(e, contract) {
+	accountContract.new({from: web3.eth.accounts[0], data: compiledObject['<stdin>:userAccount'].code, gas:470000000}, function(e, contract) {
 		if(!e) {
 			if(!contract.address) {
 				console.log("Contract transaction send: TransactionHash: " + contract.transactionHash + " waiting to be mined ...");
@@ -604,9 +604,9 @@ exports = module.exports = app;
 //======TEST CODE========
 //=======================
 
-sleep(20000).then(()=>{
-	searchForTagWithRange("anime",0,1)
-		.then(()=>{
-			console.log(_result);
-		})
-})
+// sleep(20000).then(()=>{
+// 	searchForTagWithRange("anime",0,1)
+// 		.then(()=>{
+// 			console.log(_result);
+// 		})
+// })
