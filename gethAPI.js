@@ -59,16 +59,20 @@ if(web3.isConnected()) {
 //===========================
 //==== API to call BEGIN ====
 //===========================
-app.post('/uploadPhoto', function uploadPhotoFromDisk(path,tag,geoLocation){
-	addFileToIPFSAndSendTransaction(path,tag,geoLocation)
+app.post('/uploadPhoto', function uploadPhotoFromDisk(req, res){
+	addFileToIPFSAndSendTransaction(req.query.path,req.query.tag,req.query.geoLocation)
 		.then(()=>{
+			res.json("Completed adding image and thumbnail.");
 			console.log("Completed adding image and thumbnail.");
 		})
 });
 
-app.post('/deletePhoto', function deletePhotoFromDisk(path,tag){
-	deleteFileFromIPFSSendTransaction(path,tag)
+app.post('/deletePhoto', function deletePhotoFromDisk(req,res){
+	console.log("path - ", req.query.path);
+	console.log("tag - ", req.query.tag);
+	deleteFileFromIPFSSendTransaction(req.query.path,req.query.tag)
 		.then(()=>{
+			res.json("Completed deleting image and thumbnail.");
 			console.log("Completed deleting image.")
 		})
 });
@@ -243,6 +247,9 @@ function addPhotoToFile(indexOfFile,currPhoto){
 			resolve();
 		}
 		else{
+			console.log("====================================");
+			console.log(fileName+ " ADDED TO MUTEX SYSTEM");
+			console.log("====================================");
 			mutexForFile[fileName]=new Mutex();
 			fs.writeFile(fileName,'',function(error){
 				resolve();
@@ -310,23 +317,36 @@ function readDataFromFile(fileName){
 //To use this function include a callback function after
 //setting a suitable timer.
 //NEED TO UNDERSTAND THIS!
-function searchForTagWithRange(tag,startIndex,endIndex){
+
+app.get('/searchTag',(req,res)=>{
+	var tag=req.query.tag;
+	var startIndex=req.query.startIndex;
+	var endIndex=req.query.endIndex;
+	searchForTagWithRange(tag,startIndex,endIndex)
+		.then(()=>{
+			console.log(_result);
+			res.json(_result);
+		})
+})
+function searchForTagWithRange(tag , startIndex , endIndex) {
 	_result=[]
 	return new Promise((resolve,reject)=>{
 		(function loopingOverFiles(index){
 			var jsonPromise=new Promise((resolveThis,reject)=>{
-				var fileName=tag+"_"+index.toString()+"_"+(index+1).toString()+".txt";
-				console.log(fileName);
+				var fileName=fileDataDir + tag+"_"+index.toString()+"_"+(index+1).toString()+".txt";
 				index++;
-				mutexForFile[fileName].synchronize(()=>{
-					return readDataFromFile(fileName)
-						.then(()=>{
-							resolveThis();
-						})
-				});
+				try {
+					mutexForFile[fileName].synchronize(()=>{
+						return readDataFromFile(fileName)
+							.then(()=>{
+								resolveThis();
+							})
+					});
+				} catch(err) {
+					console.log(err);
+				}
 			});
 			jsonPromise.then(()=>{
-				console.log("now here");
 				if(index<parseInt(endIndex)){
 					loopingOverFiles(index);
 				}
@@ -357,7 +377,6 @@ function deleteFromFileNameAfterLock(fileName,hash){
 						loopingOverData(index);
 					}
 					else if(index==config["data"].length){
-						// console.log("here");
 						fs.writeFile(fileName,JSON.stringify(configNew),'utf8',function(error){
 							console.log(configNew);
 							resolve();
@@ -399,7 +418,7 @@ function deletePhoto(tag,hash){
 				}
 			}
 			else{
-				console.log("FILE DOSENT EXISTS");
+				console.log("FILE DOSENT EXIST");
 			}
 		})
 		return deletePhotoFromFile(tag,hash);
@@ -425,7 +444,7 @@ function createAccount() {
 	var compiledObject = web3.eth.compile.solidity(accountSource);
 	var accountContract = web3.eth.contract(compiledObject['<stdin>:userAccount'].info.abiDefinition);
 	
-	accountContract.new({from: web3.eth.accounts[0], data: compiledObject['<stdin>:userAccount'].code, gas:4700000}, function(e, contract) {
+	accountContract.new({from: web3.eth.accounts[0], data: compiledObject['<stdin>:userAccount'].code, gas:47000000}, function(e, contract) {
 		if(!e) {
 			if(!contract.address) {
 				console.log("Contract transaction send: TransactionHash: " + contract.transactionHash + " waiting to be mined ...");
@@ -583,3 +602,11 @@ exports = module.exports = app;
 
 //=======================
 //======TEST CODE========
+//=======================
+
+sleep(20000).then(()=>{
+	searchForTagWithRange("anime",0,1)
+		.then(()=>{
+			console.log(_result);
+		})
+})
