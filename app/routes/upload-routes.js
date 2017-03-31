@@ -31,7 +31,6 @@ module.exports = function(app) {
     app.get('/api/fetchAll', function(req, res) {
         console.log("Begin fetch");
         fs.readdir(path.resolve('my_images/'), function(err, files) {
-            if (err) return next(err);
             res.json({ files: files, filePath: path.resolve('my_images/') })
                 // res.send(files);
         });

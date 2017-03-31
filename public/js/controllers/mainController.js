@@ -43,7 +43,7 @@ angular.module('mainCtrl', ['ngFileUpload'])
                     infowindow.open(map);
                     $scope.addLocation = { lat: event.latLng.lat(), lng: event.latLng.lng() };
                     $http({
-                            url: 'http://localhost:7070/getTopNMarker/20/' + event.latLng.lat() + '/' + event.latLng.lng(),
+                            url: 'http://localhost:7070/getTopNMarker/1/' + event.latLng.lat() + '/' + event.latLng.lng(),
                             method: 'GET'
                         })
                         .then(function locationSuccessCallback(response) {
@@ -55,7 +55,7 @@ angular.module('mainCtrl', ['ngFileUpload'])
 
                 // map.addListener('mousemove', function(event) {
                 //     $http({
-                //             url: 'http://localhost:7070/getTopNMarker/20/' + event.latLng.lat() + '/' + event.latLng.lng(),
+                //             url: 'https://localhost:7070/getTopNMarker/20/' + event.latLng.lat() + '/' + event.latLng.lng(),
                 //             method: 'GET'
                 //         })
                 //         .then(function locationSuccessCallback(response) {
@@ -189,7 +189,7 @@ angular.module('mainCtrl', ['ngFileUpload'])
                 });
         }
 
-        $scope.fetchTags = function() {
+        function fetchTags() {
             $http({
                     url: 'http://localhost:6969/searchTag',
                     method: 'GET',
@@ -204,7 +204,7 @@ angular.module('mainCtrl', ['ngFileUpload'])
                 }, function locationErrorCallback(response) {
                     console.log(response);
                 });
-        }
+        };
 
         $scope.select = function() {
             this.setSelectionRange(0, this.value.length);

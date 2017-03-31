@@ -1,6 +1,7 @@
 var kdTree = require('./kdTree').kdTree;
 var photos = require('./data.json');
 var jsonfile = require('jsonfile');
+var path = require('path');
 
 function distance(a, b) {
 	var lat1 = a.latitude,
@@ -40,20 +41,21 @@ exports.all = function(req, res) {
 };
 
 exports.topN = function(req, res){
-	console.log('getTopN');
 	var numMarkers = req.params.num;
 	var lat = req.params.lat;
 	var lng = req.params.lng;
+	if (numMarkers<photos.length){
+		numMarkers = photos.length;
+	}
 	var currentPosition = {latitude: lat, longitude: lng};
 	console.log('Retrieving markers closest ' + numMarkers + 'at lat: ' + lat + ', lng: ' + lng);
 	var tree = new kdTree(photos, distance, ["latitude", "longitude"]);
-
 	var nearest = tree.nearest(currentPosition, numMarkers);
 	var markers = [];
 	for (var i = 0; i < numMarkers; i++) {
 		markers.push(nearest[i]);
 	}
-	
+	console.log(markers);
 	res.send(markers);
 }
 
@@ -79,7 +81,7 @@ exports.add = function(req, res) {
 	photos.push(newPhoto);
 	console.log('Adding marker: ');
 	console.log(photos);
-	var file = './routes/data.json';
+	var file = path.resolve('app/routes/utilities/data.json');
 	jsonfile.writeFile(file, photos, function (err) {
 		 if (err) {
 			console.log('Error adding marker: ' + err);
@@ -128,7 +130,7 @@ exports.delete = function(req, res) {
 	photos.splice(index, 1);
 	console.log('Deleting marker: ');
 	console.log(photos);
-	var file = './routes/data.json';
+	var file = path.resolve('app/routes/utilities/data.json');
 	jsonfile.writeFile(file, photos, function (err) {
 		 if (err) {
 			console.log('Error adding marker: ' + err);
