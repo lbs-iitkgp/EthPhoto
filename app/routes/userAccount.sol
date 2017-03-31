@@ -7,14 +7,13 @@ contract userAccount {
 	function userAccount() {
 	}
 
-	function uploadPhoto(string photoHash, string thumbnailHash, string tag, string lng,string lat)
+	function uploadPhoto(string photoHash, string thumbnailHash, string tag, string geolocation)
  payable {
 		addressLogger("PHOTO_UPLOAD_START");
 		addressLogger(photoHash);
 		addressLogger(thumbnailHash);
 		addressLogger(tag);
-		addressLogger(lng);
-		addressLogger(lat);
+		addressLogger(geolocation);
 		addressLogger("PHOTO_UPLOAD_END");
 	}
 
