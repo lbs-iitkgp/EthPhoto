@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html ng-app="ethphoto">
+
+<head>
+    <title>EthPhoto</title>
+    <meta name="viewport" content="initial-scale=1.0">
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/search.css">
+    <link rel="stylesheet" href="css/deckgrid.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.1/angular.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.1/angular-route.js"></script>
+    <script src="/upload_module/ng-file-upload-shim.min.js"></script>
+    <script src="/upload_module/ng-file-upload-all.min.js"></script>
+    <script src="/angular-deckgrid/angular-deckgrid.min.js"></script>
+    <script type="text/javascript" src="js/controllers/mainController.js"></script>
+    <script type="text/javascript" src="js/directives/slide.js"></script>
+    <script type="text/javascript" src="js/services/uploads.js"></script>
+    <script type="text/javascript" src="js/services/clarifai.js"></script>
+    <script type="text/javascript" src="js/core.js"></script>
+</head>
+
+<body>
+    <div class="container-fluid" ng-controller="mainController">
+        <div id="mainView">
+            <div id="map" class="firstBlur" ng-class='{"blur":addToggle||allToggle, "removeBlur":!addToggle&&!allToggle}'></div>
+            <div class="row">
+                <div class="col-md-1 nopadding">
+                </div>
+                <div class="col-md-9 nopadding">
+                    <form action="" class="search-form">
+                        <div class="form-group has-feedback">
+                            <label for="search" class="sr-only">Search</label>
+                            <input type="text" class="form-control" name="search" id="search" placeholder="Search for tags" ng-model='tagSearch' , ng-model-options='{ debounce: 3000 }' , onclick='select()'>
+                            <span class="glyphicon glyphicon-search form-control-feedback"></span>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-md-1 nopadding">
+                    <button id="addButton" class="btn btn-default" type="button" slide-toggle="#addView" ng-click="toggleAdd()" ng-disabled="!addLocation.lat">
+                        Add photo
+                    </button>
+                </div>
+                <div class="col-md-1 nopadding">
+                    <button id="allButton" class="btn btn-default" type="button" slide-toggle="#allView" ng-click="toggleAll();fetchImages()">
+                        My photos
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="addView" class="slideable" duration="0.7s">
+            <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <div id="jumboCards" class="jumbotron">
+                        <div class="row">
+                            <div class="col-xs-10 col-xs-offset-1 align-middle" align="center">
+                                <h4>Upload file here</h4>
+                                <div ng-show="!file" type="file" name="file" ngf-drop ngf-select ng-model="file" class="drop-box" ngf-drag-over-class="'dragover'" ngf-allow-dir="true" accept="image/*" ngf-pattern="'image/*'">Drop image here or click to upload</div>
+                                <img ng-show="file" type="file" name="file" class="drop-box-full img-responsive" ngf-drop ngf-select ng-model="file" ngf-drag-over-class="'dragover'" ngf-allow-dir="true" accept="image/*" ngf-pattern="'image/*'" ngf-src="file" ngf-resize="{centerCrop: true}">
+                                <div style="font:smaller; padding-left: 1vw; padding-right: 1vw; padding-top: 1vw;">{{errFile.name}} {{errFile.$error}} {{errFile.$errorParam}}
+                                    <span class="progress" ng-show="f.progress >= 0 && f.progress < 100">
+                                            <progress class="progress progress-striped progress-animated" value="{{f.progress}}" max="100">Uploaded: {{f.progress}}%</progress>
+                                    </span>
+                                </div>
+                                <p>{{errorMsg}}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-xs-12" align="center">
+                    <div class="btn-group" role="group" aria-label="Image tags">
+                        <button ng-repeat="tag in imageTags" type="button" class="btn btn-outline-warning" ng-click="download(tag)">{{tag}}</button>
+                    </div>
+                    <br/>
+                    <br/>
+                    <h5 style="color: #ff7d54;">Click on any of the above to save lowpoly image with the corresponding name</h5>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-xs-6" align="center">
+                    <input ng-model="tagsText" class="form-control" id="tags-text" placeholder="Custom tag for image" type="text">
+                </div>
+                <div class="col-xs-6">
+                    <button class="btn btn-primary" ng-click="uploadFromDisk()">Upload</button>
+                </div>
+            </div>
+        </div>
+        <div id="allView" class="slideable" duration="0.7s">
+            <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <div id="jumboCards" class="jumbotron">
+                        <div deckgrid class="deckgrid" source="myImages">
+                            <div class="a-card">
+                                <h5>{{card.title}}</h5>
+                                <img style="max-width: 250px;" src="" ng-src="data:image/jpeg;base64,{{card.src}}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    if (typeof module === 'object') {
+        window.module = module;
+        module = undefined;
+    }
+    </script>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+    <script>
+    if (window.module) module = window.module;
+    </script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyALqC-VVUPT9lTMZgXp71M-fXTgwFXt-88&callback=initMap" async defer></script>
+</body>
+
+</html>
