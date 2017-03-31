@@ -6,6 +6,7 @@ const ipfsApi=require('ipfs-api')
 const concat = require('concat-stream')
 const util=require('./utilAPI.js')
 const mkdirp=require('mkdirp')
+const request=require('request')
 // const lwip=require('lwip')
 app = express();
 
@@ -35,6 +36,7 @@ var getUserCountForHash={};
 var getUserImages={};
 var thumbnailHashToImageHash={};
 var address="";
+var hashToTag={};
 //===========================
 //======END OF VARIABLES=====
 //===========================
@@ -69,8 +71,7 @@ app.post('/uploadPhoto', function uploadPhotoFromDisk(req, res){
 
 app.post('/deletePhoto', function deletePhotoFromDisk(req,res){
 	console.log("path - ", req.query.path);
-	console.log("tag - ", req.query.tag);
-	deleteFileFromIPFSSendTransaction(req.query.path,req.query.tag)
+	deleteFileFromIPFSSendTransaction(req.query.path)
 		.then(()=>{
 			res.json("Completed deleting image and thumbnail.");
 			console.log("Completed deleting image.")
@@ -141,13 +142,23 @@ function ipfsAddToDisk(hash,thumbnailHash){
 	console.log("ipfsAddToDisk_END");
 }
 
-function deleteFileFromIPFSSendTransaction(path,tag){
+function deleteFileFromIPFSSendTransaction(path){
 	return new Promise((resolve,reject)=>{
 		ipfs.util.addFromFs(path,(error,response)=>{
 			if(error){
 				console.log("File already deleted.");
 			}
 			else{
+				try{
+					fs.unlink(path);
+				}
+				catch (e){
+					console.log(e);
+				}
+				request.delete({
+					'path':'http://localhost:7070'+'/'+response[0]["hash"]
+				});
+				var tag=hashToTag[response[0]["hash"]];
 				sendTransactionToDelete(address,response[0]["hash"],tag);
 				resolve();
 			}
@@ -164,6 +175,7 @@ function addFileToIPFSAndSendTransaction(path,tag,geolocation){
 			}
 			else{
 				console.log("Added file to IPFS");
+				hashToTag[response[0]["hash"]]=tag;
 				getImageThumbnailHash(path)
 					.then(()=>{
 						console.log("thumbnailHash is: " + _thumbnailHash);
@@ -256,6 +268,7 @@ function addPhotoToFile(indexOfFile,currPhoto){
 			resolve();
 		}
 		else{
+			//
 			console.log("====================================");
 			console.log(fileName+ " ADDED TO MUTEX SYSTEM");
 			console.log("====================================");
@@ -283,27 +296,37 @@ function incrementTag(tag,currPhoto){
 }
 
 function addPhoto(tag,hash,thumbNailHash,geoLocation){
+	console.log(geoLocation);
 	console.log("addPhoto_BEGIN");
 	console.log(tag,hash,thumbNailHash,geoLocation);
 	var currPhoto=new Photo(hash,thumbNailHash,tag,geoLocation);
-	var jsonPromise=new Promise(function(resolve,reject){
-		// console.log("JSON_PROMISE",hash,thumbNailHash);
-		ipfsAddToDisk(hash,thumbNailHash);
-		if(tag in countImagesForTag){
-			resolve();
-		}
-		else{
-			countImagesForTag[tag]=0;
-			mutexForCountImagesTag[tag]=new Mutex();
-			resolve();
-		}
-	});
-	jsonPromise.then((error,response)=>{
-		mutexForCountImagesTag[tag].synchronize(function(){
-			return incrementTag(tag,currPhoto);
-		})
-	});
-	console.log("addPhoto_END");
+	try{
+		var geoJson=JSON.parse(geoLocation);
+		request.post({
+			url:'http://localhost:7070/'+hash+'/'+thumbnailHash+'/'+geoJson.lat+'/'+geoJson.lng+'/'+tag
+		});
+		var jsonPromise=new Promise(function(resolve,reject){
+			// console.log("JSON_PROMISE",hash,thumbNailHash);
+			ipfsAddToDisk(hash,thumbNailHash);
+			if(tag in countImagesForTag){
+				resolve();
+			}
+			else{
+				countImagesForTag[tag]=0;
+				mutexForCountImagesTag[tag]=new Mutex();
+				resolve();
+			}
+		});
+		jsonPromise.then((error,response)=>{
+			mutexForCountImagesTag[tag].synchronize(function(){
+				return incrementTag(tag,currPhoto);
+			})
+		});
+		console.log("addPhoto_END");
+	}
+	catch(e){
+		console.log("Error while parsing the geo-Location.");	
+	}
 }
 
 var _result=[];
@@ -455,10 +478,10 @@ function createAccount() {
 	// console.log("compiled object" + compiledObject);
 	// var accountContract = web3.eth.contract(compiledObject['<stdin>:userAccount'].info.abiDefinition);
 	// console.log(accountContract);
-	var accountContract=web3.eth.contract([{"constant":false,"inputs":[{"name":"photoHash","type":"string"},{"name":"tag","type":"string"}],"name":"deletePhoto","outputs":[],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"photoHash","type":"string"},{"name":"thumbnailHash","type":"string"},{"name":"tag","type":"string"},{"name":"geolocation","type":"string"}],"name":"uploadPhoto","outputs":[],"payable":true,"type":"function"},{"inputs":[],"payable":false,"type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"name":"message","type":"string"}],"name":"addressLogger","type":"event"}]);
-	var data='0x6060604052341561000c57fe5b5b5b5b6107ca8061001e6000396000f30060606040526000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680635d960e1a14610046578063ebe7a7e5146100db575bfe5b6100d9600480803590602001908201803590602001908080601f0160208091040260200160405190810160405280939291908181526020018383808284378201915050505050509190803590602001908201803590602001908080601f016020809104026020016040519081016040528093929190818152602001838380828437820191505050505050919050506101f6565b005b6101f4600480803590602001908201803590602001908080601f0160208091040260200160405190810160405280939291908181526020018383808284378201915050505050509190803590602001908201803590602001908080601f0160208091040260200160405190810160405280939291908181526020018383808284378201915050505050509190803590602001908201803590602001908080601f0160208091040260200160405190810160405280939291908181526020018383808284378201915050505050509190803590602001908201803590602001908080601f0160208091040260200160405190810160405280939291908181526020018383808284378201915050505050509190505061041f565b005b7fa6389559397379f4838732946412b33d3c7880096a9de333e06c6fd5a3ba6a146040518080602001828103825260128152602001807f50484f544f5f44454c4554455f5354415254000000000000000000000000000081525060200191505060405180910390a17fa6389559397379f4838732946412b33d3c7880096a9de333e06c6fd5a3ba6a148260405180806020018281038252838181518152602001915080519060200190808383600083146102cf575b8051825260208311156102cf576020820191506020810190506020830392506102ab565b505050905090810190601f1680156102fb5780820380516001836020036101000a031916815260200191505b509250505060405180910390a17fa6389559397379f4838732946412b33d3c7880096a9de333e06c6fd5a3ba6a14816040518080602001828103825283818151815260200191508051906020019080838360008314610379575b80518252602083111561037957602082019150602081019050602083039250610355565b505050905090810190601f1680156103a55780820380516001836020036101000a031916815260200191505b509250505060405180910390a17fa6389559397379f4838732946412b33d3c7880096a9de333e06c6fd5a3ba6a146040518080602001828103825260108152602001807f50484f544f5f44454c4554455f454e440000000000000000000000000000000081525060200191505060405180910390a15b5050565b7fa6389559397379f4838732946412b33d3c7880096a9de333e06c6fd5a3ba6a146040518080602001828103825260128152602001807f50484f544f5f55504c4f41445f5354415254000000000000000000000000000081525060200191505060405180910390a17fa6389559397379f4838732946412b33d3c7880096a9de333e06c6fd5a3ba6a148460405180806020018281038252838181518152602001915080519060200190808383600083146104f8575b8051825260208311156104f8576020820191506020810190506020830392506104d4565b505050905090810190601f1680156105245780820380516001836020036101000a031916815260200191505b509250505060405180910390a17fa6389559397379f4838732946412b33d3c7880096a9de333e06c6fd5a3ba6a148360405180806020018281038252838181518152602001915080519060200190808383600083146105a2575b8051825260208311156105a25760208201915060208101905060208303925061057e565b505050905090810190601f1680156105ce5780820380516001836020036101000a031916815260200191505b509250505060405180910390a17fa6389559397379f4838732946412b33d3c7880096a9de333e06c6fd5a3ba6a1482604051808060200182810382528381815181526020019150805190602001908083836000831461064c575b80518252602083111561064c57602082019150602081019050602083039250610628565b505050905090810190601f1680156106785780820380516001836020036101000a031916815260200191505b509250505060405180910390a17fa6389559397379f4838732946412b33d3c7880096a9de333e06c6fd5a3ba6a148160405180806020018281038252838181518152602001915080519060200190808383600083146106f6575b8051825260208311156106f6576020820191506020810190506020830392506106d2565b505050905090810190601f1680156107225780820380516001836020036101000a031916815260200191505b509250505060405180910390a17fa6389559397379f4838732946412b33d3c7880096a9de333e06c6fd5a3ba6a146040518080602001828103825260108152602001807f50484f544f5f55504c4f41445f454e440000000000000000000000000000000081525060200191505060405180910390a15b505050505600a165627a7a7230582024d00ceb8efec111a2f8dbbfa3138ea6f3860a9cf7dd251f3bf89c9872be075d0029';
+	var accountContract=web3.eth.contract([{"constant":false,"inputs":[{"name":"photoHash","type":"string"},{"name":"tag","type":"string"}],"name":"deletePhoto","outputs":[],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"photoHash","type":"string"},{"name":"thumbnailHash","type":"string"},{"name":"tag","type":"string"},{"name":"lng","type":"string"},{"name":"lat","type":"string"}],"name":"uploadPhoto","outputs":[],"payable":true,"type":"function"},{"inputs":[],"payable":false,"type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"name":"message","type":"string"}],"name":"addressLogger","type":"event"}]);
+	var data='0x6060604052341561000c57fe5b5b5b5b6108b88061001e6000396000f30060606040526000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680635d960e1a14610046578063f9c8da52146100db575bfe5b6100d9600480803590602001908201803590602001908080601f0160208091040260200160405190810160405280939291908181526020018383808284378201915050505050509190803590602001908201803590602001908080601f01602080910402602001604051908101604052809392919081815260200183838082843782019150505050505091905050610239565b005b610237600480803590602001908201803590602001908080601f0160208091040260200160405190810160405280939291908181526020018383808284378201915050505050509190803590602001908201803590602001908080601f0160208091040260200160405190810160405280939291908181526020018383808284378201915050505050509190803590602001908201803590602001908080601f0160208091040260200160405190810160405280939291908181526020018383808284378201915050505050509190803590602001908201803590602001908080601f0160208091040260200160405190810160405280939291908181526020018383808284378201915050505050509190803590602001908201803590602001908080601f01602080910402602001604051908101604052809392919081815260200183838082843782019150505050505091905050610462565b005b7fa6389559397379f4838732946412b33d3c7880096a9de333e06c6fd5a3ba6a146040518080602001828103825260128152602001807f50484f544f5f44454c4554455f5354415254000000000000000000000000000081525060200191505060405180910390a17fa6389559397379f4838732946412b33d3c7880096a9de333e06c6fd5a3ba6a14826040518080602001828103825283818151815260200191508051906020019080838360008314610312575b805182526020831115610312576020820191506020810190506020830392506102ee565b505050905090810190601f16801561033e5780820380516001836020036101000a031916815260200191505b509250505060405180910390a17fa6389559397379f4838732946412b33d3c7880096a9de333e06c6fd5a3ba6a148160405180806020018281038252838181518152602001915080519060200190808383600083146103bc575b8051825260208311156103bc57602082019150602081019050602083039250610398565b505050905090810190601f1680156103e85780820380516001836020036101000a031916815260200191505b509250505060405180910390a17fa6389559397379f4838732946412b33d3c7880096a9de333e06c6fd5a3ba6a146040518080602001828103825260108152602001807f50484f544f5f44454c4554455f454e440000000000000000000000000000000081525060200191505060405180910390a15b5050565b7fa6389559397379f4838732946412b33d3c7880096a9de333e06c6fd5a3ba6a146040518080602001828103825260128152602001807f50484f544f5f55504c4f41445f5354415254000000000000000000000000000081525060200191505060405180910390a17fa6389559397379f4838732946412b33d3c7880096a9de333e06c6fd5a3ba6a1485604051808060200182810382528381815181526020019150805190602001908083836000831461053b575b80518252602083111561053b57602082019150602081019050602083039250610517565b505050905090810190601f1680156105675780820380516001836020036101000a031916815260200191505b509250505060405180910390a17fa6389559397379f4838732946412b33d3c7880096a9de333e06c6fd5a3ba6a148460405180806020018281038252838181518152602001915080519060200190808383600083146105e5575b8051825260208311156105e5576020820191506020810190506020830392506105c1565b505050905090810190601f1680156106115780820380516001836020036101000a031916815260200191505b509250505060405180910390a17fa6389559397379f4838732946412b33d3c7880096a9de333e06c6fd5a3ba6a1483604051808060200182810382528381815181526020019150805190602001908083836000831461068f575b80518252602083111561068f5760208201915060208101905060208303925061066b565b505050905090810190601f1680156106bb5780820380516001836020036101000a031916815260200191505b509250505060405180910390a17fa6389559397379f4838732946412b33d3c7880096a9de333e06c6fd5a3ba6a14826040518080602001828103825283818151815260200191508051906020019080838360008314610739575b80518252602083111561073957602082019150602081019050602083039250610715565b505050905090810190601f1680156107655780820380516001836020036101000a031916815260200191505b509250505060405180910390a17fa6389559397379f4838732946412b33d3c7880096a9de333e06c6fd5a3ba6a148160405180806020018281038252838181518152602001915080519060200190808383600083146107e3575b8051825260208311156107e3576020820191506020810190506020830392506107bf565b505050905090810190601f16801561080f5780820380516001836020036101000a031916815260200191505b509250505060405180910390a17fa6389559397379f4838732946412b33d3c7880096a9de333e06c6fd5a3ba6a146040518080602001828103825260108152602001807f50484f544f5f55504c4f41445f454e440000000000000000000000000000000081525060200191505060405180910390a15b50505050505600a165627a7a72305820038fc9e1d741d472b358b91c3cfdaee93be339453e0bad5b6623079d776122100029';
 	
-	accountContract.new({from: web3.eth.accounts[0], data: data, gas:47000000}, function(e, contract) {
+	accountContract.new({from: web3.eth.accounts[0], data: data, gas:470000000}, function(e, contract) {
 		if(!e) {
 			if(!contract.address) {
 				console.log("Contract transaction send: TransactionHash: " + contract.transactionHash + " waiting to be mined ...");
@@ -474,16 +497,44 @@ function createAccount() {
 	})
 }
 
+function replaceAllWithCharacters(geolocation){
+	(function loopingOverData(index){
+		var jsonPromise=new Promise((resolve,reject)=>{
+			if(geolocation[index]=='.'){
+				geolocation[index]='+';
+			}
+			else if(geolocation[index]==':'){
+				geolocation[index]='-';
+			}
+			console.log(geolocation);
+			index++;
+			resolve();
+		});
+		jsonPromise.then(()=>{
+			if(index<geolocation.size){
+				loopingOverData(index);
+			}
+			else{
+				console.log("inside replace function.");
+				console.log(geolocation);
+				return geolocation;
+			}
+		})
+	})(0);
+}
+
 function sendTransactionToAdd(address, photoHash, thumbnailHash, tag, geolocation) {
 	console.log("_sendTransactionToAdd_BEGIN");
-	var accountContract=web3.eth.contract([{"constant":false,"inputs":[{"name":"photoHash","type":"string"},{"name":"tag","type":"string"}],"name":"deletePhoto","outputs":[],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"photoHash","type":"string"},{"name":"thumbnailHash","type":"string"},{"name":"tag","type":"string"},{"name":"geolocation","type":"string"}],"name":"uploadPhoto","outputs":[],"payable":true,"type":"function"},{"inputs":[],"payable":false,"type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"name":"message","type":"string"}],"name":"addressLogger","type":"event"}]);
+	var accountContract=web3.eth.contract([{"constant":false,"inputs":[{"name":"photoHash","type":"string"},{"name":"tag","type":"string"}],"name":"deletePhoto","outputs":[],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"photoHash","type":"string"},{"name":"thumbnailHash","type":"string"},{"name":"tag","type":"string"},{"name":"lng","type":"string"},{"name":"lat","type":"string"}],"name":"uploadPhoto","outputs":[],"payable":true,"type":"function"},{"inputs":[],"payable":false,"type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"name":"message","type":"string"}],"name":"addressLogger","type":"event"}]);
 	var account = accountContract.at(address);
-	var transactionHash = account.uploadPhoto(photoHash, thumbnailHash, tag, geolocation, {from:web3.eth.accounts[0]});
+	geoJSON=JSON.parse(geolocation);
+	console.log(parseInt(geoJSON.lat), parseInt(geoJSON.lng));
+	var transactionHash = account.uploadPhoto(photoHash, thumbnailHash, tag, parseInt(geoJSON.lat), parseInt(geoJSON.lng), {from:web3.eth.accounts[0]});
 	console.log("_sendTransactionToAdd_FINISH "+transactionHash);
 }
 
 function sendTransactionToDelete(address, photoHash, tag) {
-	var accountContract=web3.eth.contract([{"constant":false,"inputs":[{"name":"photoHash","type":"string"},{"name":"tag","type":"string"}],"name":"deletePhoto","outputs":[],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"photoHash","type":"string"},{"name":"thumbnailHash","type":"string"},{"name":"tag","type":"string"},{"name":"geolocation","type":"string"}],"name":"uploadPhoto","outputs":[],"payable":true,"type":"function"},{"inputs":[],"payable":false,"type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"name":"message","type":"string"}],"name":"addressLogger","type":"event"}]);
+	var accountContract=web3.eth.contract([{"constant":false,"inputs":[{"name":"photoHash","type":"string"},{"name":"tag","type":"string"}],"name":"deletePhoto","outputs":[],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"photoHash","type":"string"},{"name":"thumbnailHash","type":"string"},{"name":"tag","type":"string"},{"name":"lng","type":"string"},{"name":"lat","type":"string"}],"name":"uploadPhoto","outputs":[],"payable":true,"type":"function"},{"inputs":[],"payable":false,"type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"name":"message","type":"string"}],"name":"addressLogger","type":"event"}]);
 	var account = accountContract.at(address);
 	var transactionHash = account.deletePhoto(photoHash, tag, {from:web3.eth.accounts[0]});
 }
@@ -493,8 +544,16 @@ function hexToAscii(hexStr) {
 	var n=hexStr.length;
 	for(var i=0 ; i<n ; i+=2) {
 		var c=String.fromCharCode(parseInt(hexStr.substr(i, 2), 16));
-		if((c>='A' && c<='Z') || (c>='a' && c<='z') || (c>='0' && c<='9') || (c=='_')){
-			str+=c;
+		if((c>='A' && c<='Z') || (c>='a' && c<='z') || (c>='0' && c<='9') || (c=='_') || (c=='{') || (c=='}') || (c=='+') || (c=='-')){
+			if(c=='-'){
+				str+=':'
+			}
+			else if(c=='+'){
+				str+='.'
+			}
+			else{
+				str+=c;
+			}
 		}
 	}
 	return str;
@@ -526,14 +585,15 @@ function computeOnTransaction(transactionHash){
 				var functionArgumet=hexToAscii(response["logs"][0]["data"]).toString();
 				console.log(functionArgumet.length);
 				console.log(functionArgumet=="PHOTO_UPLOAD_START");
-				if(response["logs"].length==6){
-					// console.log("one of these");
+				if(response["logs"].length==7){
+					console.log("one of these");
 					if(functionArgumet=="PHOTO_UPLOAD_START"){
 						var hash=hexToAscii(response["logs"][1]["data"]);
 						var thumbnailHash=hexToAscii(response["logs"][2]["data"]);
 						var tag=hexToAscii(response["logs"][3]["data"]);
-						var geolocation=hexToAscii(response["logs"][4]["data"]);
-						addPhoto(tag,hash,thumbnailHash,geolocation);
+						var lng=hexToAscii(response["logs"][4]["data"]);
+						var lat=hexToAscii(response["logs"][5]["data"]);
+						addPhoto(tag,hash,thumbnailHash,{"lng":lng,"lat":lat});
 					}
 				}
 				else if(response["logs"].length==4){
@@ -559,28 +619,33 @@ function computeOnTransaction(transactionHash){
 function getDataFromBlock(blockIndex){
 	console.log(blockIndex);
 	web3.eth.getBlockTransactionCount(blockIndex,(error,response)=>{
-		var numOfTransaction=JSON.parse(response);
-		if(numOfTransaction>0){
-			(function loopingOverBlockTransaction(index){
-				var jsonPromise=new Promise((resolve,reject)=>{
-					web3.eth.getTransactionFromBlock(blockIndex,index,(error,response)=>{
-						if(!error){
-							try{
-								computeOnTransaction(response["hash"]);
-							}catch(e){
-								console.log(e);
+		try{
+			var numOfTransaction=JSON.parse(response);
+			if(numOfTransaction>0){
+				(function loopingOverBlockTransaction(index){
+					var jsonPromise=new Promise((resolve,reject)=>{
+						web3.eth.getTransactionFromBlock(blockIndex,index,(error,response)=>{
+							if(!error){
+								try{
+									computeOnTransaction(response["hash"]);
+								}catch(e){
+									console.log(e);
+								}
+								index++;
+								resolve();
 							}
-							index++;
-							resolve();
+						})
+					});
+					jsonPromise.then(()=>{
+						if(index<numOfTransaction){
+							loopingOverBlockTransaction(index);
 						}
 					})
-				});
-				jsonPromise.then(()=>{
-					if(index<numOfTransaction){
-						loopingOverBlockTransaction(index);
-					}
-				})
-			})(0);
+				})(0);
+			}
+		}
+		catch(e){
+			console.log(e);
 		}
 	})
 }
@@ -614,9 +679,9 @@ exports = module.exports = app;
 //======TEST CODE========
 //=======================
 
-sleep(20000).then(()=>{
-	searchForTagWithRange("anime",0,1)
-		.then(()=>{
-			console.log(_result);
-		})
-})
+// sleep(20000).then(()=>{
+// 	searchForTagWithRange("anime",0,1)
+// 		.then(()=>{
+// 			console.log(_result);
+// 		})
+// })
