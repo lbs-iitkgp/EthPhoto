@@ -8,6 +8,12 @@ Instead of having central database to store data, this App has the data which is
 
 Built by Team 03, for the inter-hall event "Opensoft" of IIT Kharagpur.
 
+### Requirements
+
+- An Operating System such as Linux / Mac / Windows
+- Atleast 4MB of free disk-space
+- A web browser such as Chrome / Firefox / Opera / Safari
+
 ### Installation Guide(s)
 
 Install the most recent versions of each of the below listed softwares -
