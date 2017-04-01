@@ -1,4 +1,5 @@
 var map, contentString;
+var markers = [];
 
 function initMap() {
     var centerPos = { lat: 22.3333, lng: 87.3333 };
@@ -11,7 +12,7 @@ function initMap() {
 }
 
 angular.module('mainCtrl', ['ngFileUpload'])
-    .controller('mainController', ['$scope', 'Upload', 'uploadFac', '$http', '$location', '$timeout', '$compile', 'Clarifai', function($scope, Upload, uploadFac, $http, $location, $timeout, $compile, Clarifai) {
+    .controller('mainController', ['$scope', 'Upload', '$http', '$location', '$timeout', '$compile', 'Clarifai', '$route', '$window', function($scope, Upload, $http, $location, $timeout, $compile, Clarifai, $route, $window) {
         $scope.addLocation = {};
         $scope.$watch('tagSearch', function() {
             if ($scope.tagSearch != "")
@@ -43,11 +44,19 @@ angular.module('mainCtrl', ['ngFileUpload'])
                     infowindow.open(map);
                     $scope.addLocation = { lat: event.latLng.lat(), lng: event.latLng.lng() };
                     $http({
-                            url: 'http://localhost:7070/getTopNMarker/1/' + event.latLng.lat() + '/' + event.latLng.lng(),
+                            url: 'http://localhost:7070/getTopNMarker/20/' + event.latLng.lat() + '/' + event.latLng.lng(),
                             method: 'GET'
                         })
                         .then(function locationSuccessCallback(response) {
-                            console.log(response);
+                            console.log(response.data);
+                            for (var i = 0; i < response.data.length; ++i) {
+                                deleteMarkers();
+                                var tempMarker = {};
+                                tempMarker.loc = {};
+                                tempMarker.loc.lat = parseInt(response.data[i][0].latitude);
+                                tempMarker.loc.lng = parseInt(response.data[i][0].longitude);
+                                addMarker(tempMarker);
+                            }
                         }, function locationErrorCallback(response) {
                             console.log(response);
                         });
@@ -133,7 +142,23 @@ angular.module('mainCtrl', ['ngFileUpload'])
 
         $scope.uploadFromDisk = function() {
             console.log($scope.uploadedFilePath);
-            uploadFac.uploadPhoto($scope.uploadedFilePath, $scope.tagsText, JSON.stringify($scope.addLocation));
+            // uploadFac.uploadPhoto($scope.uploadedFilePath, $scope.tagsText, JSON.stringify($scope.addLocation));
+            $http({
+                method: 'POST',
+                url: 'http://localhost:6969/' + 'uploadPhoto/',
+                params: {
+                    path: $scope.uploadedFilePath,
+                    tag: $scope.tagsText,
+                    geoLocation: JSON.stringify($scope.addLocation)
+                }
+            }).then(function(response) {
+                console.log(response);
+                $scope.successSearch = response.data;
+                $route.reload();
+                $window.location.reload();
+            }, function(response) {
+                console.log(response);
+            });
         }
 
         $scope.fetchImages = function() {
@@ -205,6 +230,39 @@ angular.module('mainCtrl', ['ngFileUpload'])
                     console.log(response);
                 });
         };
+
+        // Adds a marker to the map and push to the array.
+        function addMarker(location) {
+            var marker = new google.maps.Marker({
+                position: location.loc,
+                map: map
+            });
+            markers.push(marker);
+        }
+
+        // Sets the map on all markers in the array.
+        function setMapOnAll(map) {
+            for (var i = 0; i < markers.length; i++) {
+                markers[i].setMap(map);
+            }
+        }
+
+        // Removes the markers from the map, but keeps them in the array.
+        function clearMarkers() {
+            setMapOnAll(null);
+        }
+
+        // Shows any markers currently in the array.
+        function showMarkers() {
+            setMapOnAll(map);
+        }
+
+        // Deletes all markers in the array by removing references to them.
+        function deleteMarkers() {
+            clearMarkers();
+            markers = [];
+        }
+
 
         $scope.select = function() {
             this.setSelectionRange(0, this.value.length);

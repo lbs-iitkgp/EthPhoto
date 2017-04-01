@@ -4,94 +4,95 @@ var jsonfile = require('jsonfile');
 var path = require('path');
 
 function distance(a, b) {
-	var lat1 = a.latitude,
-	lon1 = a.longitude,
-	lat2 = b.latitude,
-	lon2 = b.longitude;
-	var rad = Math.PI/180;
+    var lat1 = a.latitude,
+        lon1 = a.longitude,
+        lat2 = b.latitude,
+        lon2 = b.longitude;
+    var rad = Math.PI / 180;
 
-	var dLat = (lat2-lat1)*rad;
-	var dLon = (lon2-lon1)*rad;
-	var lat1 = lat1*rad;
-	var lat2 = lat2*rad;
+    var dLat = (lat2 - lat1) * rad;
+    var dLon = (lon2 - lon1) * rad;
+    var lat1 = lat1 * rad;
+    var lat2 = lat2 * rad;
 
-	var x = Math.sin(dLat/2);
-	var y = Math.sin(dLon/2);
+    var x = Math.sin(dLat / 2);
+    var y = Math.sin(dLon / 2);
 
-	var a = x*x + y*y * Math.cos(lat1) * Math.cos(lat2); 
-	return Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    var a = x * x + y * y * Math.cos(lat1) * Math.cos(lat2);
+    return Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 
 exports.byId = function(req, res) {
-	var id = req.params.id;
-	console.log('Retrieving markers: ' + id);
-	var marker;
-	for (var i = photos.length - 1; i >= 0; i--) {
-		if (photos[i]['photoHash'] == id) {
-			marker = photos[i];
-		}
-	}
-	res.send(marker);
+    var id = req.params.id;
+    console.log('Retrieving markers: ' + id);
+    var marker;
+    for (var i = photos.length - 1; i >= 0; i--) {
+        if (photos[i]['photoHash'] == id) {
+            marker = photos[i];
+        }
+    }
+    res.send(marker);
 };
 
 exports.all = function(req, res) {
-        console.log('Retrieving markers:  All');
-        res.send(photos);
+    console.log('Retrieving markers:  All');
+    res.send(photos);
 };
 
-exports.topN = function(req, res){
-	var numMarkers = req.params.num;
-	var lat = req.params.lat;
-	var lng = req.params.lng;
-	if (numMarkers<photos.length){
-		numMarkers = photos.length;
-	}
-	var currentPosition = {latitude: lat, longitude: lng};
-	console.log('Retrieving markers closest ' + numMarkers + 'at lat: ' + lat + ', lng: ' + lng);
-	var tree = new kdTree(photos, distance, ["latitude", "longitude"]);
-	var nearest = tree.nearest(currentPosition, numMarkers);
-	var markers = [];
-	for (var i = 0; i < numMarkers; i++) {
-		markers.push(nearest[i]);
-	}
-	console.log(markers);
-	res.send(markers);
+exports.topN = function(req, res) {
+    var numMarkers = req.params.num;
+    var lat = req.params.lat;
+    var lng = req.params.lng;
+    console.log(numMarkers, photos.length);
+    if (numMarkers > photos.length) {
+        numMarkers = photos.length;
+    }
+    var currentPosition = { latitude: lat, longitude: lng };
+    console.log('Retrieving markers closest ' + numMarkers + 'at lat: ' + lat + ', lng: ' + lng);
+    var tree = new kdTree(photos, distance, ["latitude", "longitude"]);
+    var nearest = tree.nearest(currentPosition, numMarkers);
+    var markers = [];
+    for (var i = 0; i < numMarkers; i++) {
+        markers.push(nearest[i]);
+    }
+    console.log(markers);
+    res.send(markers);
 }
 
-exports.byTag = function(req, res){
-	var tag = req.params.tag;
-	console.log('Retrieving markers: ' + id);
-	var markers = [];
-	for (var i = photos.length - 1; i >= 0; i--) {
-		if (photos[i]['tag'] == tag) {
-			markers.push(photos[i]);
-		}
-	}
-	res.send(markers);
+exports.byTag = function(req, res) {
+    var tag = req.params.tag;
+    console.log('Retrieving markers: ' + id);
+    var markers = [];
+    for (var i = photos.length - 1; i >= 0; i--) {
+        if (photos[i]['tag'] == tag) {
+            markers.push(photos[i]);
+        }
+    }
+    res.send(markers);
 }
 
 exports.add = function(req, res) {
-	var photoHash = req.params.photoHash;
-	var thumbnailHash = req.params.thumbnailHash;
-	var lat = req.params.lat;
-	var lng = req.params.lng;
-	var tag = req.params.tag;
-	var newPhoto = {"photoHash":photoHash, "thumbnailHash":thumbnailHash, "latitude": lat, "longitude": lng, "tag": tag};
-	photos.push(newPhoto);
-	console.log('Adding marker: ');
-	console.log(photos);
-	var file = path.resolve('app/routes/utilities/data.json');
-	jsonfile.writeFile(file, photos, function (err) {
-		 if (err) {
-			console.log('Error adding marker: ' + err);
-			res.send({'error':'An error has occurred'});
-		} else {
-			console.log('' + photoHash + ' document(s) added');
-			// photos = require('./data.json');
-			res.send(photoHash);
-		}
-	});
+    var photoHash = req.params.photoHash;
+    var thumbnailHash = req.params.thumbnailHash;
+    var lat = req.params.lat;
+    var lng = req.params.lng;
+    var tag = req.params.tag;
+    var newPhoto = { "photoHash": photoHash, "thumbnailHash": thumbnailHash, "latitude": lat, "longitude": lng, "tag": tag };
+    photos.push(newPhoto);
+    console.log('Adding marker: ');
+    console.log(photos);
+    var file = path.resolve('app/routes/utilities/data.json');
+    jsonfile.writeFile(file, photos, function(err) {
+        if (err) {
+            console.log('Error adding marker: ' + err);
+            res.send({ 'error': 'An error has occurred' });
+        } else {
+            console.log('' + photoHash + ' document(s) added');
+            // photos = require('./data.json');
+            res.send(photoHash);
+        }
+    });
 }
 
 // exports.update = function(req, res) {
@@ -115,32 +116,32 @@ exports.add = function(req, res) {
 // }
 
 exports.delete = function(req, res) {
-	var photoHash = req.params.photoHash;
-	var index = -1;
-	for (var i = photos.length - 1; i >= 0; i--) {
-		if (photos[i]['photoHash'] == photoHash){
-			index = i;
-		}
-	}
-	if (index === -1) {
-		console.log('Error deleting marker: ' + photoHash);
-		// res.send({'no such photohash'});
-		res.send({'error':'An error has occurred'});
-	}
-	photos.splice(index, 1);
-	console.log('Deleting marker: ');
-	console.log(photos);
-	var file = path.resolve('app/routes/utilities/data.json');
-	jsonfile.writeFile(file, photos, function (err) {
-		 if (err) {
-			console.log('Error adding marker: ' + err);
-			res.send({'error':'An error has occurred'});
-		} else {
-			console.log('' + photoHash + ' document(s) delete');
-			// photos = require('./data.json');
-			res.send(photoHash);
-		}
-	});
+    var photoHash = req.params.photoHash;
+    var index = -1;
+    for (var i = photos.length - 1; i >= 0; i--) {
+        if (photos[i]['photoHash'] == photoHash) {
+            index = i;
+        }
+    }
+    if (index === -1) {
+        console.log('Error deleting marker: ' + photoHash);
+        // res.send({'no such photohash'});
+        res.send({ 'error': 'An error has occurred' });
+    }
+    photos.splice(index, 1);
+    console.log('Deleting marker: ');
+    console.log(photos);
+    var file = path.resolve('app/routes/utilities/data.json');
+    jsonfile.writeFile(file, photos, function(err) {
+        if (err) {
+            console.log('Error adding marker: ' + err);
+            res.send({ 'error': 'An error has occurred' });
+        } else {
+            console.log('' + photoHash + ' document(s) delete');
+            // photos = require('./data.json');
+            res.send(photoHash);
+        }
+    });
 }
 
 // /*--------------------------------------------------------------------------------------------------------------------*/
