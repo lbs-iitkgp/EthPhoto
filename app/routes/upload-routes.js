@@ -18,27 +18,34 @@ var upload = multer({
 module.exports = function(app) {
 
     app.post('/api/upload', function(req, res) {
-        console.log("Begin upload");
+        // console.log("Begin upload");
         upload(req, res, function(err) {
             if (err) {
                 res.json({ error_code: 1, err_desc: err });
                 return;
             }
-            console.log("Upload Success");
+            // console.log("Upload Success");
             res.json({ error_code: 0, err_desc: null, filePath: path.resolve('my_images/') });
         })
     });
 
     app.get('/api/fetchAll', function(req, res) {
-        console.log("Begin fetch");
+        // console.log("Begin fetch");
         fs.readdir(path.resolve('my_images/'), function(err, files) {
             res.json({ files: files, filePath: path.resolve('my_images/') })
                 // res.send(files);
         });
     });
 
+    app.get('/api/getAbsPath', function(req, res) {
+        console.log(req);
+        var imgPath = 'my_images/' + req.query.imgPath;
+        console.log(imgPath);
+        res.json({ path: path.resolve(imgPath) });
+    });
+
     app.get('/api/renderImage', function(req, res) {
-        console.log(req.query);
+        // console.log(req.query);
         var img = path.resolve('my_images/' + req.query.name);
         fs.readFile(img, function(err, data) {
             if (err) throw err;
@@ -48,7 +55,7 @@ module.exports = function(app) {
     });
 
     app.get('/api/renderSearchImage', function(req, res) {
-        console.log(req.query);
+        // console.log(req.query);
         var img = req.query.name;
         // var dirImg = home + '/.EthPhoto/img-store/' + req.query.name;
         // console.log(dirImg);
@@ -59,10 +66,10 @@ module.exports = function(app) {
             }
 
             files.forEach(function(file, index) {
-                console.log(file);
+                // console.log(file);
                 // Make one pass and make the file complete
                 var fileName = file.substring(0, file.lastIndexOf('.'));
-                console.log(fileName);
+                // console.log(fileName);
                 if (fileName == img) {
                     fs.readFile(home + '/.EthPhoto/img-store/' + file, function(err, data) {
                         if (err) throw err;

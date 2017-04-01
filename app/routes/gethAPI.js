@@ -179,7 +179,7 @@ function deleteFileFromIPFSSendTransaction(path) {
                     console.log(e);
                 }
                 request.delete({
-                    'path': 'http://localhost:7070' + '/' + response[0]["hash"]
+                    'path': 'http://localhost:7070' + '/deleteMarker/' + response[0]["hash"]
                 });
                 var tag = hashToTag[response[0]["hash"]];
                 sendTransactionToDelete(address, response[0]["hash"], tag);

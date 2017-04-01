@@ -105,6 +105,14 @@
                     </div>
                 </div>
             </div>
+            <div class="row">
+                <div class="col-xs-6" align="center">
+                    <input ng-model="deleteText" class="form-control" id="delete-text" placeholder="Enter id of image to delete" type="text">
+                </div>
+                <div class="col-xs-6">
+                    <button class="btn btn-primary" ng-click="deleteFromDisk()">Delete</button>
+                </div>
+            </div>
         </div>
         <div id="searchView" class="slideable" duration="0.7s">
             <div class="row">
@@ -121,7 +129,7 @@
             </div>
             <div class="row">
                 <div class="col-xs-12 align-middle" align="center">
-                <button class="btn btn-primary" ng-click="closeSearch()">Close</button>
+                    <button class="btn btn-primary" ng-click="closeSearch()">Close</button>
                 </div>
             </div>
         </div>

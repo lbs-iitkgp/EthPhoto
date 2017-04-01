@@ -40,10 +40,10 @@ angular.module('mainCtrl', ['ngFileUpload'])
                     }
                 })
                 .then(function locationSuccessCallback(response) {
-                    console.log(response);
+                    // console.log(response);
                     return "data:image/jpeg;base64," + response;
                 }, function locationErrorCallback(response) {
-                    console.log(response);
+                    // console.log(response);
                 });
         }
 
@@ -58,7 +58,7 @@ angular.module('mainCtrl', ['ngFileUpload'])
                     };
                     map.setCenter(centerPos);
                 }, function locationErrorCallback(response) {
-                    console.log(response);
+                    // console.log(response);
                 });
             $timeout(function() {
                 var compiled = $compile(contentString)($scope)
@@ -68,7 +68,7 @@ angular.module('mainCtrl', ['ngFileUpload'])
                 });
 
                 google.maps.event.addListener(map, 'click', function(event) {
-                    console.log(event.latLng.lat(), event.latLng.lng());
+                    // console.log(event.latLng.lat(), event.latLng.lng());
                     infowindow.setPosition({ lat: event.latLng.lat(), lng: event.latLng.lng() });
                     infowindow.open(map);
                     $scope.addLocation = { lat: event.latLng.lat(), lng: event.latLng.lng() };
@@ -81,7 +81,7 @@ angular.module('mainCtrl', ['ngFileUpload'])
                                 method: 'GET'
                             })
                             .then(function locationSuccessCallback(response) {
-                                console.log(response.data);
+                                // console.log(response.data);
                                 for (var i = 0; i < response.data.length; ++i) {
                                     deleteMarkers();
                                     var tempMarker = {};
@@ -97,20 +97,20 @@ angular.module('mainCtrl', ['ngFileUpload'])
                                             }
                                         })
                                         .then(function locationSuccessCallback(response) {
-                                            console.log(response);
+                                            // console.log(response);
                                             tempMarker.icon = "data:image/jpeg;base64," + response.data;
-                                            console.log("tempMarker icon: ");
-                                            console.log(tempMarker.icon);
+                                            // console.log("tempMarker icon: ");
+                                            // console.log(tempMarker.icon);
                                             addMarker(tempMarker);
                                         }, function locationErrorCallback(response) {
-                                            console.log(response);
+                                            // console.log(response);
                                         });
                                 }
                             }, function locationErrorCallback(response) {
-                                console.log(response);
+                                // console.log(response);
                             });
                     });
-                }, 500)
+                }, 1000)
 
             }, 2000);
         }
@@ -121,16 +121,16 @@ angular.module('mainCtrl', ['ngFileUpload'])
         $scope.allToggle = false;
         $scope.searchToggle = false;
         $scope.toggleAdd = function() {
-            console.log("Add toggled!!");
+            // console.log("Add toggled!!");
             $scope.addToggle = !$scope.addToggle;
             $('#map').removeClass('firstBlur');
         }
         $scope.toggleAll = function() {
-            console.log("All toggled!!");
+            // console.log("All toggled!!");
             $scope.allToggle = !$scope.allToggle;
         }
         $scope.toggleSearch = function() {
-            console.log("Search toggled!!");
+            // console.log("Search toggled!!");
             $scope.searchToggle = !$scope.searchToggle;
         }
 
@@ -152,13 +152,13 @@ angular.module('mainCtrl', ['ngFileUpload'])
                     data: { file: file }
                 }).then(function(response) {
                     if (response.data.error_code === 0) {
-                        console.log('Success! ' + response.config.data.file.name + ' uploaded.');
+                        // console.log('Success! ' + response.config.data.file.name + ' uploaded.');
                         $scope.uploadedFilePath = response.data.filePath + '/' + response.config.data.file.name;
                     } else {
-                        console.log(response.data.err_desc);
+                        // console.log(response.data.err_desc);
                     }
                 }, function(response) {
-                    console.log('Error status: ' + response.status);
+                    // console.log('Error status: ' + response.status);
                 }, function(evt) {
                     file.progress = Math.min(100, parseInt(100.0 * evt.loaded / evt.total));
                 });
@@ -166,7 +166,7 @@ angular.module('mainCtrl', ['ngFileUpload'])
         };
 
         $scope.getTags = function(file) {
-            console.log("Calling getTags for " + file);
+            // console.log("Calling getTags for " + file);
             Clarifai.getTags(file)
                 .success(function(data) {
                     $scope.clarifaiResponse = data;
@@ -184,7 +184,7 @@ angular.module('mainCtrl', ['ngFileUpload'])
         };
 
         $scope.uploadFromDisk = function() {
-            console.log($scope.uploadedFilePath);
+            // console.log($scope.uploadedFilePath);
             // uploadFac.uploadPhoto($scope.uploadedFilePath, $scope.tagsText, JSON.stringify($scope.addLocation));
             $http({
                 method: 'POST',
@@ -195,30 +195,62 @@ angular.module('mainCtrl', ['ngFileUpload'])
                     geoLocation: JSON.stringify($scope.addLocation)
                 }
             }).then(function(response) {
-                console.log(response);
+                // console.log(response);
                 $scope.successSearch = response.data;
                 clickAddButton();
             }, function(response) {
-                console.log(response);
+                // console.log(response);
             });
+        }
+
+        $scope.deleteFromDisk = function() {
+            var deleteId = parseInt($scope.deleteText);
+            var imageToDelete = $scope.myImages[deleteId]['title'],
+                delimiter = ':',
+                start = 2,
+                tokens = imageToDelete.split(delimiter).slice(start),
+                imageToDeleteResult = tokens.join(delimiter);
+            $http({
+                    url: '/api/getAbsPath',
+                    method: 'GET',
+                    params: {
+                        imgPath: imageToDeleteResult
+                    }
+                })
+                .then(function SuccessCallback(response) {
+                    console.log(response.data.path);
+                    $http({
+                        method: 'POST',
+                        url: 'http://localhost:6969/' + 'deletePhoto/',
+                        params: {
+                            path: response.data.path
+                        }
+                    }).then(function(response) {
+                        // console.log(response);
+                    }, function(response) {
+                        // console.log(response);
+                    });
+                }, function ErrorCallback(response) {
+                    // console.log(response);
+                });
         }
 
         $scope.fetchImages = function() {
             $http.get('/api/fetchAll')
                 .then(function locationSuccessCallback(response) {
-                    console.log(response);
+                    // console.log(response);
                     $scope.myImages = [];
                     var j = 0;
                     (function loopOverfiles(index) {
-                        console.log(index);
+                        // console.log(index);
                         var jsonPromise = new Promise((resolve, reject) => {
-                            console.log("find me");
+                            // console.log("find me");
                             if (response.data.files[index][0] != '.') {
-                                console.log("if mein");
+                                // console.log("if mein");
                                 var temp = [];
                                 temp['id'] = j;
-                                temp['title'] = response.data.files[index];
-                                console.log("try to render" + j);
+                                temp['title'] = 'id:' + j + ', name:' + response.data.files[index];
+                                // console.log("try to render" + j);
                                 $http({
                                         url: '/api/renderImage',
                                         method: 'GET',
@@ -228,18 +260,18 @@ angular.module('mainCtrl', ['ngFileUpload'])
                                     })
                                     .then(function locationSuccessCallback(response) {
                                         index++;
-                                        console.log("over here");
+                                        // console.log("over here");
                                         temp['src'] = response.data;
                                         resolve();
                                     }, function locationErrorCallback(response) {
-                                        console.log(response);
+                                        // console.log(response);
                                     });
                                 $scope.myImages.push(temp);
                                 ++j;
                             } else {
                                 index++;
                                 resolve();
-                                console.log("else");
+                                // console.log("else");
                             }
                         });
                         jsonPromise.then(() => {
@@ -250,9 +282,9 @@ angular.module('mainCtrl', ['ngFileUpload'])
                             }
                         })
                     })(0);
-                    console.log($scope.myImages);
+                    // console.log($scope.myImages);
                 }, function locationErrorCallback(response) {
-                    console.log(response);
+                    // console.log(response);
                 });
         }
 
@@ -267,20 +299,20 @@ angular.module('mainCtrl', ['ngFileUpload'])
                     }
                 })
                 .then(function locationSuccessCallback(response) {
-                    console.log(response);
+                    // console.log(response);
                     var resArray = response['data'][0]['data'];
                     $scope.searchImages = [];
                     var j = 0;
                     (function loopOverfiles(index) {
-                        console.log(index);
+                        // console.log(index);
                         var jsonPromise = new Promise((resolve, reject) => {
-                            console.log("find me");
+                            // console.log("find me");
                             if (resArray[index]['hash'][0] != '.') {
-                                console.log("if mein");
+                                // console.log("if mein");
                                 var temp = [];
                                 temp['id'] = j;
                                 temp['title'] = resArray[index]['hash'];
-                                console.log("try to render" + j);
+                                // console.log("try to render" + j);
                                 $http({
                                         url: '/api/renderSearchImage',
                                         method: 'GET',
@@ -290,18 +322,18 @@ angular.module('mainCtrl', ['ngFileUpload'])
                                     })
                                     .then(function locationSuccessCallback(response) {
                                         index++;
-                                        console.log("over here");
+                                        // console.log("over here");
                                         temp['src'] = response.data;
                                         resolve();
                                     }, function locationErrorCallback(response) {
-                                        console.log(response);
+                                        // console.log(response);
                                     });
                                 $scope.searchImages.push(temp);
                                 ++j;
                             } else {
                                 index++;
                                 resolve();
-                                console.log("else");
+                                // console.log("else");
                             }
                         });
                         jsonPromise.then(() => {
@@ -312,10 +344,10 @@ angular.module('mainCtrl', ['ngFileUpload'])
                             }
                         })
                     })(0);
-                    console.log($scope.searchImages);
+                    // console.log($scope.searchImages);
                     clickSearchButton();
                 }, function locationErrorCallback(response) {
-                    console.log(response);
+                    // console.log(response);
                 });
         };
 
@@ -326,8 +358,8 @@ angular.module('mainCtrl', ['ngFileUpload'])
                 map: map,
                 icon: location.icon
             });
-            console.log("searched marker: ");
-            console.log(marker);
+            // console.log("searched marker: ");
+            // console.log(marker);
             markers.push(marker);
         }
 
