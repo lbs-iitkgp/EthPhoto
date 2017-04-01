@@ -12,12 +12,25 @@ function initMap() {
 }
 
 angular.module('mainCtrl', ['ngFileUpload'])
-    .controller('mainController', ['$scope', 'Upload', '$http', '$location', '$timeout', '$compile', 'Clarifai', '$route', '$window', function($scope, Upload, $http, $location, $timeout, $compile, Clarifai, $route, $window) {
+    .controller('mainController', ['$scope', 'Upload', '$http', '$location', '$timeout', '$compile', 'Clarifai', function($scope, Upload, $http, $location, $timeout, $compile, Clarifai) {
         $scope.addLocation = {};
         $scope.$watch('tagSearch', function() {
             if ($scope.tagSearch != "")
                 fetchTags();
         });
+
+        function clickAddButton() {
+            $timeout(function() {
+                angular.element(document.querySelector('#addButton')).triggerHandler('click');
+            }, 0);
+        };
+
+        function clickSearchButton() {
+            $timeout(function() {
+                angular.element(document.querySelector('#searchButton')).triggerHandler('click');
+            }, 0);
+        };
+
         // Init to get map location
         $scope.init = function() {
             $http.get('http://freegeoip.net/json/')
@@ -43,36 +56,29 @@ angular.module('mainCtrl', ['ngFileUpload'])
                     infowindow.setPosition({ lat: event.latLng.lat(), lng: event.latLng.lng() });
                     infowindow.open(map);
                     $scope.addLocation = { lat: event.latLng.lat(), lng: event.latLng.lng() };
-                    $http({
-                            url: 'http://localhost:7070/getTopNMarker/20/' + event.latLng.lat() + '/' + event.latLng.lng(),
-                            method: 'GET'
-                        })
-                        .then(function locationSuccessCallback(response) {
-                            console.log(response.data);
-                            for (var i = 0; i < response.data.length; ++i) {
-                                deleteMarkers();
-                                var tempMarker = {};
-                                tempMarker.loc = {};
-                                tempMarker.loc.lat = parseInt(response.data[i][0].latitude);
-                                tempMarker.loc.lng = parseInt(response.data[i][0].longitude);
-                                addMarker(tempMarker);
-                            }
-                        }, function locationErrorCallback(response) {
-                            console.log(response);
-                        });
                 });
 
-                // map.addListener('mousemove', function(event) {
-                //     $http({
-                //             url: 'https://localhost:7070/getTopNMarker/20/' + event.latLng.lat() + '/' + event.latLng.lng(),
-                //             method: 'GET'
-                //         })
-                //         .then(function locationSuccessCallback(response) {
-                //             console.log(response);
-                //         }, function locationErrorCallback(response) {
-                //             console.log(response);
-                //         });
-                // });
+                setInterval(function() {
+                    google.maps.event.addListenerOnce(map, 'mousemove', function(event) {
+                        $http({
+                                url: 'http://localhost:7070/getTopNMarker/20/' + event.latLng.lat() + '/' + event.latLng.lng(),
+                                method: 'GET'
+                            })
+                            .then(function locationSuccessCallback(response) {
+                                console.log(response.data);
+                                for (var i = 0; i < response.data.length; ++i) {
+                                    deleteMarkers();
+                                    var tempMarker = {};
+                                    tempMarker.loc = {};
+                                    tempMarker.loc.lat = parseInt(response.data[i][0].latitude);
+                                    tempMarker.loc.lng = parseInt(response.data[i][0].longitude);
+                                    addMarker(tempMarker);
+                                }
+                            }, function locationErrorCallback(response) {
+                                console.log(response);
+                            });
+                    });
+                }, 500)
 
             }, 2000);
         }
@@ -159,9 +165,7 @@ angular.module('mainCtrl', ['ngFileUpload'])
             }).then(function(response) {
                 console.log(response);
                 $scope.successSearch = response.data;
-                // $route.reload();
-                // $window.location.reload();
-                $('#addButton').trigger('click');
+                clickAddButton();
             }, function(response) {
                 console.log(response);
             });
@@ -277,7 +281,7 @@ angular.module('mainCtrl', ['ngFileUpload'])
                         })
                     })(0);
                     console.log($scope.searchImages);
-                    $('#searchButton').trigger('click');
+                    clickSearchButton();
                 }, function locationErrorCallback(response) {
                     console.log(response);
                 });
@@ -313,6 +317,10 @@ angular.module('mainCtrl', ['ngFileUpload'])
         function deleteMarkers() {
             clearMarkers();
             markers = [];
+        }
+
+        $scope.closeSearch = function() {
+            clickSearchButton();
         }
 
 
