@@ -31,6 +31,22 @@ angular.module('mainCtrl', ['ngFileUpload'])
             }, 0);
         };
 
+        function getThumbnail(tHash) {
+            $http({
+                    url: '/api/renderSearchImage',
+                    method: 'GET',
+                    params: {
+                        name: tHash
+                    }
+                })
+                .then(function locationSuccessCallback(response) {
+                    console.log(response);
+                    return "data:image/jpeg;base64," + response;
+                }, function locationErrorCallback(response) {
+                    console.log(response);
+                });
+        }
+
         // Init to get map location
         $scope.init = function() {
             $http.get('http://freegeoip.net/json/')
@@ -72,7 +88,23 @@ angular.module('mainCtrl', ['ngFileUpload'])
                                     tempMarker.loc = {};
                                     tempMarker.loc.lat = parseInt(response.data[i][0].latitude);
                                     tempMarker.loc.lng = parseInt(response.data[i][0].longitude);
-                                    addMarker(tempMarker);
+                                    // tempMarker.icon = getThumbnail(response.data[i][0].thumbnailHash);
+                                    $http({
+                                            url: '/api/renderSearchImage',
+                                            method: 'GET',
+                                            params: {
+                                                name: response.data[i][0].thumbnailHash
+                                            }
+                                        })
+                                        .then(function locationSuccessCallback(response) {
+                                            console.log(response);
+                                            tempMarker.icon = "data:image/jpeg;base64," + response.data;
+                                            console.log("tempMarker icon: ");
+                                            console.log(tempMarker.icon);
+                                            addMarker(tempMarker);
+                                        }, function locationErrorCallback(response) {
+                                            console.log(response);
+                                        });
                                 }
                             }, function locationErrorCallback(response) {
                                 console.log(response);
@@ -291,8 +323,11 @@ angular.module('mainCtrl', ['ngFileUpload'])
         function addMarker(location) {
             var marker = new google.maps.Marker({
                 position: location.loc,
-                map: map
+                map: map,
+                icon: location.icon
             });
+            console.log("searched marker: ");
+            console.log(marker);
             markers.push(marker);
         }
 

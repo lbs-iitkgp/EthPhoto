@@ -8,6 +8,8 @@ const util = require('./utilAPI.js')
 const mkdirp = require('mkdirp')
 const request = require('request')
     // const lwip=require('lwip')
+var PythonShell=require('python-shell')
+
 app = express();
 
 app.use(function(req, res, next) {
@@ -126,13 +128,22 @@ function getImageThumbnailHash(path) {
         // 			})
         // 		})
         // })
-        ipfs.util.addFromFs(path, (err, res) => {
-            if (err) {
-                console.log("Error while adding thumbnail");
-            } else {
-                _thumbnailHash = res[0]["hash"];
-                resolve();
-            }
+        var options = {
+            mode: 'text',
+            args: [path]
+        };
+        console.log(path);
+        PythonShell.run('./app/routes/thumbnail-gen.py', options, (err, res) => {
+            console.log(err);
+            console.log('done');
+            ipfs.util.addFromFs('./_thumbnail.png', (err, result) => {
+                if (err) {
+                    console.log("Error while adding thumbnail");
+                } else {
+                    _thumbnailHash = result[0]["hash"];
+                    resolve();
+                }
+            })
         })
     });
 }

@@ -56,7 +56,7 @@ exports.topN = function(req, res) {
     for (var i = 0; i < numMarkers; i++) {
         markers.push(nearest[i]);
     }
-    console.log(markers);
+    // console.log(markers);
     res.send(markers);
 }
 
