@@ -28,14 +28,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lbs-iitkgp/EthPhoto.git"
+    "url": "git+https://github.com/<username>/EthPhoto.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/lbs-iitkgp/EthPhoto/issues"
+    "url": "https://github.com/<username>/EthPhoto/issues"
   },
-  "homepage": "https://github.com/lbs-iitkgp/EthPhoto#readme",
+  "homepage": "https://github.com/<username>/EthPhoto#readme",
   "xo": {
     "esnext": true,
     "envs": [
