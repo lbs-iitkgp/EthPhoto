@@ -47,6 +47,11 @@
                     </button>
                 </div>
             </div>
+            <div class="row">
+                <div class="col-md-1 col-md-offset-11 nopadding">
+                    <button id="searchButton" class="btn btn-primary-outline" type="button" slide-toggle="#searchView" ng-click="toggleSearch()"></button>
+                </div>
+            </div>
         </div>
         <div id="addView" class="slideable" duration="0.7s">
             <div class="row">
@@ -92,6 +97,20 @@
                 <div class="col-md-10 col-md-offset-1">
                     <div id="jumboCards" class="jumbotron">
                         <div deckgrid class="deckgrid" source="myImages">
+                            <div class="a-card">
+                                <h5>{{card.title}}</h5>
+                                <img style="max-width: 250px;" src="" ng-src="data:image/jpeg;base64,{{card.src}}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="searchView" class="slideable" duration="0.7s">
+            <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <div id="jumboCards" class="jumbotron">
+                        <div deckgrid class="deckgrid" source="searchImages">
                             <div class="a-card">
                                 <h5>{{card.title}}</h5>
                                 <img style="max-width: 250px;" src="" ng-src="data:image/jpeg;base64,{{card.src}}">

@@ -1,6 +1,7 @@
 var fs = require('fs');
 var path = require('path');
 var multer = require('multer');
+var home = require('os').homedir()
 
 var storage = multer.diskStorage({
     destination: function(req, file, cb) {
@@ -43,6 +44,33 @@ module.exports = function(app) {
             if (err) throw err;
             res.writeHead(200, { 'Content-Type': 'text/html' });
             res.end(new Buffer(data).toString('base64'));
+        });
+    });
+
+    app.get('/api/renderSearchImage', function(req, res) {
+        console.log(req.query);
+        var img = req.query.name;
+        // var dirImg = home + '/.EthPhoto/img-store/' + req.query.name;
+        // console.log(dirImg);
+        fs.readdir(home + '/.EthPhoto/img-store/', function(err, files) {
+            if (err) {
+                console.error("Could not list the directory.", err);
+                process.exit(1);
+            }
+
+            files.forEach(function(file, index) {
+                console.log(file);
+                // Make one pass and make the file complete
+                var fileName = file.substring(0, file.lastIndexOf('.'));
+                console.log(fileName);
+                if (fileName == img) {
+                    fs.readFile(home + '/.EthPhoto/img-store/' + file, function(err, data) {
+                        if (err) throw err;
+                        res.writeHead(200, { 'Content-Type': 'text/html' });
+                        res.end(new Buffer(data).toString('base64'));
+                    });
+                }
+            });
         });
     })
 };

@@ -81,6 +81,7 @@ angular.module('mainCtrl', ['ngFileUpload'])
         // Blur classes
         $scope.addToggle = false;
         $scope.allToggle = false;
+        $scope.searchToggle = false;
         $scope.toggleAdd = function() {
             console.log("Add toggled!!");
             $scope.addToggle = !$scope.addToggle;
@@ -89,6 +90,10 @@ angular.module('mainCtrl', ['ngFileUpload'])
         $scope.toggleAll = function() {
             console.log("All toggled!!");
             $scope.allToggle = !$scope.allToggle;
+        }
+        $scope.toggleSearch = function() {
+            console.log("Search toggled!!");
+            $scope.searchToggle = !$scope.searchToggle;
         }
 
         // File uploads
@@ -154,8 +159,9 @@ angular.module('mainCtrl', ['ngFileUpload'])
             }).then(function(response) {
                 console.log(response);
                 $scope.successSearch = response.data;
-                $route.reload();
-                $window.location.reload();
+                // $route.reload();
+                // $window.location.reload();
+                $('#addButton').trigger('click');
             }, function(response) {
                 console.log(response);
             });
@@ -226,6 +232,52 @@ angular.module('mainCtrl', ['ngFileUpload'])
                 })
                 .then(function locationSuccessCallback(response) {
                     console.log(response);
+                    var resArray = response['data'][0]['data'];
+                    $scope.searchImages = [];
+                    var j = 0;
+                    (function loopOverfiles(index) {
+                        console.log(index);
+                        var jsonPromise = new Promise((resolve, reject) => {
+                            console.log("find me");
+                            if (resArray[index]['hash'][0] != '.') {
+                                console.log("if mein");
+                                var temp = [];
+                                temp['id'] = j;
+                                temp['title'] = resArray[index]['hash'];
+                                console.log("try to render" + j);
+                                $http({
+                                        url: '/api/renderSearchImage',
+                                        method: 'GET',
+                                        params: {
+                                            name: resArray[index]['hash']
+                                        }
+                                    })
+                                    .then(function locationSuccessCallback(response) {
+                                        index++;
+                                        console.log("over here");
+                                        temp['src'] = response.data;
+                                        resolve();
+                                    }, function locationErrorCallback(response) {
+                                        console.log(response);
+                                    });
+                                $scope.searchImages.push(temp);
+                                ++j;
+                            } else {
+                                index++;
+                                resolve();
+                                console.log("else");
+                            }
+                        });
+                        jsonPromise.then(() => {
+                            if (index < resArray.length) {
+                                loopOverfiles(index);
+                            } else if (index == resArray.length) {
+                                //qwe
+                            }
+                        })
+                    })(0);
+                    console.log($scope.searchImages);
+                    $('#searchButton').trigger('click');
                 }, function locationErrorCallback(response) {
                     console.log(response);
                 });

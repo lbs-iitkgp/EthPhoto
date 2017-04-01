@@ -532,8 +532,8 @@ function sendTransactionToAdd(address, photoHash, thumbnailHash, tag, geolocatio
     var accountContract = web3.eth.contract([{ "constant": false, "inputs": [{ "name": "photoHash", "type": "string" }, { "name": "tag", "type": "string" }], "name": "deletePhoto", "outputs": [], "payable": true, "type": "function" }, { "constant": false, "inputs": [{ "name": "photoHash", "type": "string" }, { "name": "thumbnailHash", "type": "string" }, { "name": "tag", "type": "string" }, { "name": "geolocation", "type": "string" }], "name": "uploadPhoto", "outputs": [], "payable": true, "type": "function" }, { "inputs": [], "payable": false, "type": "constructor" }, { "anonymous": false, "inputs": [{ "indexed": false, "name": "message", "type": "string" }], "name": "addressLogger", "type": "event" }]);
     var account = accountContract.at(address);
     geoJSON = JSON.parse(geolocation);
-    console.log(parseInt(geoJSON.lat), parseInt(geoJSON.lng));
-    var transactionHash = account.uploadPhoto(photoHash, thumbnailHash, tag, parseInt(geoJSON.lat).toString() + "," + parseInt(geoJSON.lng).toString(), { from: web3.eth.accounts[0] });
+    console.log(parseFloat(geoJSON.lat), parseFloat(geoJSON.lng));
+    var transactionHash = account.uploadPhoto(photoHash, thumbnailHash, tag, parseInt(parseFloat(geoJSON.lat)*1000).toString() + "," + parseInt(parseFloat(geoJSON.lng)*1000).toString(), { from: web3.eth.accounts[0] });
     console.log("_sendTransactionToAdd_FINISH " + transactionHash);
 }
 
@@ -594,8 +594,8 @@ function computeOnTransaction(transactionHash) {
                         var geolocation = hexToAscii(response["logs"][4]["data"]);
                         var geoLocationArr = geolocation.split(",");
                         var geoJsonData = {};
-                        geoJsonData["lat"] = geoLocationArr[0];
-                        geoJsonData["lng"] = geoLocationArr[1];
+                        geoJsonData["lat"] = parseFloat(geoLocationArr[0])/1000;
+                        geoJsonData["lng"] = parseFloat(geoLocationArr[1])/1000;
                         sleep(100).then(() => {
                             console.log("hi" + geoJsonData);
                             addPhoto(tag, hash, thumbnailHash, geoJsonData);

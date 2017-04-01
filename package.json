@@ -22,7 +22,7 @@
   "main": "backendTest.js",
   "scripts": {
     "test": "xo",
-    "start": "electron .",
+    "start": "node_modules/electron/dist/electron .",
     "build": "electron-packager . --out=dist --asar --overwrite --all"
   },
   "repository": {
