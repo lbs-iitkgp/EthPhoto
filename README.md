@@ -11,7 +11,7 @@ Built by Team 03, for the inter-hall event "Opensoft" of IIT Kharagpur.
 ### Requirements
 
 - An Operating System such as Linux / Mac / Windows
-- Atleast 4MB of free disk-space
+- Atleast 9MB of free disk-space
 - A web browser such as Chrome / Firefox / Opera / Safari
 
 ### Installation Guide(s)
